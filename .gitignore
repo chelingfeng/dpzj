@@ -4,3 +4,4 @@
 /view/
 /public/uploads/*
 /backup/
+.env
