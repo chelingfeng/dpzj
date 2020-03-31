@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow" />
-    <title>登录管理系统 -  Powered by CRMEB!</title>
+    <title>登录管理系统</title>
     <meta name="generator" content="CRMEB! v2.5" />
     <meta name="author" content="CRMEB! Team and CRMEB UI Team" />
     <link href="{__FRAME_PATH}css/bootstrap.min.css?v=3.4.0" rel="stylesheet">
@@ -17,11 +17,11 @@
     </script>
 </head>
 <body class="gray-bg login-bg">
-<canvas id="canvas" width="900" height="300" style="position: fixed;top: -50px;width: 60%;left: 20%"></canvas>
+<!-- <canvas id="canvas" width="900" height="300" style="position: fixed;top: -50px;width: 60%;left: 20%"></canvas> -->
 <div class="middle-box text-center loginscreen  animated fadeInDown">
     <div class="login-group">
-        <h3 class="login-logo">
-            <img src="{__ADMIN_PATH}images/logo.png">
+        <h3 class="login-logo" style="line-height:50px">
+            冻品专家
         </h3>
         <form role="form" action="{:url('verify')}" method="post" id="form" onsubmit="return false">
             <div class="form-group">
@@ -50,8 +50,7 @@
     </div>
 </div>
 <div class="footer" style=" position: fixed;bottom: 0;width: 100%;left: 0;margin: 0;opacity: 0.8;">
-    <div class="pull-right">© 2017-2020 <a href="http://www.crmeb.com/" target="_blank">CRMEB</a>
-    </div>
+    
 </div>
 
 <!-- 全局js -->
