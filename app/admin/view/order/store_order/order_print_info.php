@@ -31,9 +31,9 @@
                                     <td>{$key+1}</td>
                                     <td>{$info.cart_info.productInfo.store_name}</td>
                                     <td>{$info.cart_info.cart_num}</td>
-                                    <td>{$info.cart_info.productInfo.unit_name}</td>
-                                    <td>{$info.cart_info.productInfo.ot_price}</td>
-                                    <td>{:sprintf("%.2f", $info['cart_info']['productInfo']['ot_price'] * $info['cart_info']['cart_num'])}</td>
+                                    <td>{$info.cart_info.productInfo.attrInfo.suk}</td>
+                                    <td>{$info.cart_info.productInfo.price}</td>
+                                    <td>{:sprintf("%.2f", $info['cart_info']['productInfo']['price'] * $info['cart_info']['cart_num'])}</td>
                                     <td></td>
                                 </tr>
                                 {/foreach}

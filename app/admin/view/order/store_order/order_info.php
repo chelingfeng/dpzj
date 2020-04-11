@@ -98,9 +98,9 @@
                 <div class="panel-body">
                     <div class="row show-grid">
                         {volist name="_info" id="cart"}
-                        <div class="col-xs-4" >{$cart.cart_info.productInfo.store_name}</div>
+                        <div class="col-xs-4" >{$cart.cart_info.productInfo.store_name}-{$cart.cart_info.productInfo.attrInfo.suk}</div>
                         <div class="col-xs-4">{$cart.cart_info.productInfo.price}元</div>
-                        <div class="col-xs-4" > {$cart.cart_info.cart_num}{$cart.cart_info.productInfo.unit_name}</div>
+                        <div class="col-xs-4" > {$cart.cart_info.cart_num}</div>
                         {/volist}
                     </div>
                 </div>
