@@ -90,6 +90,22 @@
                 </div>
             </div>
         </div>
+         <div class="col-sm-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    商品信息
+                </div>
+                <div class="panel-body">
+                    <div class="row show-grid">
+                        {volist name="_info" id="cart"}
+                        <div class="col-xs-4" >{$cart.cart_info.productInfo.store_name}</div>
+                        <div class="col-xs-4">{$cart.cart_info.productInfo.price}元</div>
+                        <div class="col-xs-4" > {$cart.cart_info.cart_num}{$cart.cart_info.productInfo.unit_name}</div>
+                        {/volist}
+                    </div>
+                </div>
+            </div>
+        </div>
         {if condition="$orderInfo['delivery_type'] eq 'express'"}
         <div class="col-sm-12">
             <div class="panel panel-default">

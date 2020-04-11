@@ -599,17 +599,18 @@
                 $eb.createModalFrame(data.nickname + '订单详情', layList.U({a: 'order_info', q: {oid: data.id}}));
                 break;
             case 'order_print':
-                var url = layList.U({c: 'order.store_order', a: 'order_print', p: {id: data.id}});
-                $eb.$swal('delete', function () {
-                    $eb.axios.get(url).then(function (res) {
-                        if (res.status == 200 && res.data.code == 200) {
-                            $eb.$swal('success', res.data.msg);
-                        } else
-                            return Promise.reject(res.data.msg || '核销失败')
-                    }).catch(function (err) {
-                        $eb.$swal('error', err);
-                    });
-                }, {'title': '确认打印订单？', 'text': '是否确认打印！', 'confirm': '确定'})
+                $eb.createModalFrame('打印订单', layList.U({a: 'order_print_info', q: {oid: data.id}}));
+                // var url = layList.U({c: 'order.store_order', a: 'order_print', p: {id: data.id}});
+                // $eb.$swal('delete', function () {
+                //     $eb.axios.get(url).then(function (res) {
+                //         if (res.status == 200 && res.data.code == 200) {
+                //             $eb.$swal('success', res.data.msg);
+                //         } else
+                //             return Promise.reject(res.data.msg || '核销失败')
+                //     }).catch(function (err) {
+                //         $eb.$swal('error', err);
+                //     });
+                // }, {'title': '确认打印订单？', 'text': '是否确认打印！', 'confirm': '确定'})
                 break;
         }
     })
