@@ -108,7 +108,7 @@
                                         <span style="float: left">经纬度：</span>
                                         <Tooltip content="请点击查找位置进行选择位置">
                                             <i-Input placeholder="经纬度" v-model="form.latlng" :readonly="true" style="width: 80%" >
-                                                <span slot="append" @click="openWindows('查找位置','{:Url('select_address')}',{w:400})" style="cursor:pointer">查找位置</span>
+                                                <span slot="append" @click="openWindows('查找位置','{:Url('select_address')}',{h:500,w:400})" style="cursor:pointer">查找位置</span>
                                             </i-Input>
                                         </Tooltip>
                                     </i-Col>
