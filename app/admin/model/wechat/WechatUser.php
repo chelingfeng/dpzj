@@ -217,7 +217,11 @@ class WechatUser extends BaseModel
             ->field(['sum(number) as brokerage_money', 'uid as buid'])
             ->fetchSql(true)
             ->select();
-        $model = User::where(['status' => 1]);
+        if ((int)sys_config('store_brokerage_statu') == 1) {
+            $model = User::where(['is_promoter' => 1, 'status' => 1]);
+        } else {
+            $model = User::where(['status' => 1]);
+        }
         $model = $model->alias('u')
             ->join('(' . $orderSql . ') o', 'o.ouid = u.uid', 'left')
             ->join('(' . $billSql . ') b', 'b.buid = u.uid', 'left')
