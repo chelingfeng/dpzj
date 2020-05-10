@@ -379,9 +379,9 @@ class User extends BaseModel
      * @param $uid 用户uid
      * @return bool
      */
-    public static function editUser($avatar, $nickname, $uid)
+    public static function editUser($avatar, $nickname, $phone, $uid)
     {
-        return self::edit(['avatar' => $avatar, 'nickname' => $nickname], $uid, 'uid');
+        return self::edit(['avatar' => $avatar, 'phone' => $phone, 'nickname' => $nickname], $uid, 'uid');
     }
 
     /**

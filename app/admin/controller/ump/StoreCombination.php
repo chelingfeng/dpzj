@@ -133,7 +133,7 @@ class StoreCombination extends AuthController
         $f[] = Form::frameImageOne('image', '商品主图片(305*305px)', Url::buildUrl('admin/widget.images/index', array('fodder' => 'image')))->icon('image')->width('100%')->height('500px');
         $f[] = Form::frameImages('images', '商品轮播图(640*640px)', Url::buildUrl('admin/widget.images/index', array('fodder' => 'images')))->maxLength(5)->icon('images')->width('100%')->height('500px');
         $f[] = Form::number('effective_time', '拼团时效', '24')->placeholder('请输入拼团订单有效时间，单位：小时')->col(12);
-        $f[] = Form::number('people', '拼团人数', 2)->min(2)->col(12);
+        $f[] = Form::number('people', '成团数量', 2)->min(2)->col(12);
         $f[] = Form::number('num', '单次购买商品个数', 1)->min(1)->col(12);
         $f[] = Form::number('sort', '排序')->col(12);
         $f[] = Form::radio('is_host', '热门推荐', 1)->options([['label' => '开启', 'value' => 1], ['label' => '关闭', 'value' => 0]])->col(12);

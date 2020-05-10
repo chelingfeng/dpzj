@@ -520,11 +520,12 @@ class UserController
      */
     public function edit(Request $request)
     {
-        list($avatar, $nickname) = UtilService::postMore([
+        list($avatar, $nickname, $phone) = UtilService::postMore([
             ['avatar', ''],
             ['nickname', ''],
+            ['phone', ''],
         ], $request, true);
-        if (User::editUser($avatar, $nickname, $request->uid())) return app('json')->successful('修改成功');
+        if (User::editUser($avatar, $nickname, $phone, $request->uid())) return app('json')->successful('修改成功');
         return app('json')->fail('修改失败');
     }
 

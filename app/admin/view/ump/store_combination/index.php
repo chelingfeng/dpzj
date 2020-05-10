@@ -144,7 +144,6 @@
             {field: 'title', title: '拼团名称'},
             {field: 'ot_price', title: '原价',width:'6%'},
             {field: 'price', title: '拼团价',width:'6%'},
-            {field: 'people', title: '拼团人数',width:'7%',templet: '<span>【{{d.people}}】人</span>'},
             {field: 'count_people_all', title: '参与人数',width:'7%',templet: '<span>【{{d.count_people_all}}】人</span>'},
             {field: 'count_people_pink', title: '成团数量',width:'7%',templet: '<span>【{{d.count_people_pink}}】团</span>'},
             {field: 'quota_show', title: '限量',width:'4%'},

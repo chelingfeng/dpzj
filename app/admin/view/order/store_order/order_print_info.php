@@ -9,7 +9,7 @@
                     <td colspan="3" style="font-size:18px;line-height:40px">{:sys_config('print_title')}</td>
                 </tr>
                 <tr>
-                    <td style="text-align:left;line-height:35px">客户名称：<span>{$orderInfo.real_name}</span></td>
+                    <td style="text-align:left;line-height:35px">店铺名称：<span>{$orderInfo.real_name}</span></td>
                     <td style="line-height:35px">订单创建时间：<span>{$orderInfo.add_time|date="Y-m-d H:i:s"}</span></td>
                     <td style="line-height:35px">单据编号：<span>{$orderInfo.order_id}</span></td>
                 </tr>
@@ -32,8 +32,8 @@
                                     <td>{$info.cart_info.productInfo.store_name}</td>
                                     <td>{$info.cart_info.cart_num}</td>
                                     <td>{$info.cart_info.productInfo.attrInfo.suk}</td>
-                                    <td>{$info.cart_info.productInfo.price}</td>
-                                    <td>{:sprintf("%.2f", $info['cart_info']['productInfo']['price'] * $info['cart_info']['cart_num'])}</td>
+                                    <td>{$info.cart_info.truePrice}</td>
+                                    <td>{:sprintf("%.2f", $info['cart_info']['truePrice'] * $info['cart_info']['cart_num'])}</td>
                                     <td></td>
                                 </tr>
                                 {/foreach}
