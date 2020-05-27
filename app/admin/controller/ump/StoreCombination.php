@@ -17,6 +17,8 @@ use app\admin\model\ump\{StorePink,
 use think\facade\Route as Url;
 use app\admin\model\system\{SystemAttachment, ShippingTemplates};
 use crmeb\services\{FormBuilder as Form, UtilService as Util, JsonService as Json};
+use app\models\store\StorePink as StorePink2;
+use think\facade\Db;
 
 /**
  * 拼团管理
@@ -50,6 +52,41 @@ class StoreCombination extends AuthController
         StoreCombinationModel::SaveExcel($where);
     }
 
+    public function change_status()
+    {
+        $status = request()->param('status');
+        $id = request()->param('id');
+        if ($status == '2') { //工厂生产中
+            StoreCombinationModel::where('id', $id)->update(['is_show' => 0, 'status' => $status]);
+            StorePink2::where('cid', $id)->where('status', '1')->where('is_refund', 0)->update(['status' => 2]);
+        } else if ($status == '3') { //工厂已发货
+            StoreCombinationModel::where('id', $id)->update(['is_show' => 0, 'status' => $status]);
+            StorePink2::where('cid', $id)->where('status', '2')->where('is_refund', 0)->update(['status' => 4]);
+        } else if ($status == '4') { //已入库
+            StoreCombinationModel::where('id', $id)->update(['is_show' => 0, 'status' => $status]);
+            StorePink2::where('cid', $id)->where('status', '4')->where('is_refund', 0)->update(['status' => 5]);
+            $pinks = StorePink2::where('cid', $id)->where('status', '5')->where('is_refund', 0)->select();
+            foreach ($pinks as $pink) {
+                $cart = Db::table('eb_store_order_cart_info')->where('oid', $pink['order_id_key'])->find();
+                $cart['cart_info'] = json_decode($cart['cart_info'], true);
+                $toUserStock = Db::table('eb_user_stock')->where('user_id', $pink['uid'])->where('product_attr_unique', $cart['cart_info']['product_attr_unique'])->where('product_id', $cart['cart_info']['product_id'])->find();
+                if (empty($toUserStock)) {
+                    Db::table('eb_user_stock')->insert([
+                        'user_id' => $pink['uid'],
+                        'product_attr_unique' => $cart['cart_info']['product_attr_unique'],
+                        'product_id' => $cart['cart_info']['product_id'],
+                        'stock' => $cart['cart_info']['cart_num'],
+                        'add_time' => time(),
+                    ]);
+                } else {
+                    Db::table('eb_user_stock')->where('id', $toUserStock['id'])->update(
+                        ['stock' => $toUserStock['stock'] + $cart['cart_info']['cart_num']]
+                    );
+                }
+            }
+        }
+    }
+
     /**
      * 异步获取拼团数据
      */
@@ -68,6 +105,8 @@ class StoreCombination extends AuthController
         $data = $combinationList['list']['data'];
         foreach ($data as $k => $v) {
             $data[$k]['_stop_time'] = date('Y/m/d H:i:s', $v['stop_time']);
+            $data[$k]['pink_ok_sum'] = StorePink2::getPinkOkSumTotalNum($v['id']);
+            $data[$k]['shengyu'] = $v['quota'] - $data[$k]['pink_ok_sum'];
         }
         return Json::successlayui(['count' => $combinationList['list']['total'], 'data' => $data]);
     }
@@ -132,9 +171,10 @@ class StoreCombination extends AuthController
         $f[] = Form::dateTimeRange('section_time', '拼团时间');
         $f[] = Form::frameImageOne('image', '商品主图片(305*305px)', Url::buildUrl('admin/widget.images/index', array('fodder' => 'image')))->icon('image')->width('100%')->height('500px');
         $f[] = Form::frameImages('images', '商品轮播图(640*640px)', Url::buildUrl('admin/widget.images/index', array('fodder' => 'images')))->maxLength(5)->icon('images')->width('100%')->height('500px');
-        $f[] = Form::number('effective_time', '拼团时效', '24')->placeholder('请输入拼团订单有效时间，单位：小时')->col(12);
-        $f[] = Form::number('people', '成团数量', 2)->min(2)->col(12);
-        $f[] = Form::number('num', '单次购买商品个数', 1)->min(1)->col(12);
+        $f[] = Form::number('effective_time', '拼团时效', '1000')->placeholder('请输入拼团订单有效时间，单位：小时')->col(12);
+        // $f[] = Form::number('people', '成团数量', 2)->min(2)->col(12);
+        $f[] = Form::number('storage_price', '仓储费', 0)->min(0)->col(12);
+        $f[] = Form::number('num', '单次购买商品个数', 100)->min(100)->col(12);
         $f[] = Form::number('sort', '排序')->col(12);
         $f[] = Form::radio('is_host', '热门推荐', 1)->options([['label' => '开启', 'value' => 1], ['label' => '关闭', 'value' => 0]])->col(12);
         $form = Form::make_post_form('添加用户通知', $f, Url::buildUrl('save'));
@@ -158,8 +198,9 @@ class StoreCombination extends AuthController
             ['section_time', []],
             ['effective_time', 0],
             ['postage', 0],
+            ['storage_price', 0],
             ['price', 0],
-            ['people', 0],
+            ['people', 2],
             ['sort', 0],
             ['stock', 0],
             ['sales', 0],
@@ -169,7 +210,7 @@ class StoreCombination extends AuthController
             ['temp_id', ''],
             ['weight', ''],
             ['volume', ''],
-            ['num', 1],
+            ['num', 100],
         ]);
         $data['description'] = StoreDescription::getDescription($data['product_id']);
         if (!$data['title']) return Json::fail('请输入拼团名称');
@@ -231,7 +272,8 @@ class StoreCombination extends AuthController
         $f[] = Form::frameImages('images', '商品轮播图(640*640px)', Url::buildUrl('admin/widget.images/index', array('fodder' => 'images')), json_decode($product->getData('images')))->maxLength(5)->icon('images')->width('100%')->height('500px');
         $f[] = Form::number('effective_time', '拼团时效(单位 小时)', $product->getData('effective_time'))->placeholder('请输入拼团订单有效时间，单位：小时')->col(12);
         $f[] = Form::hidden('price', $product->getData('price'));
-        $f[] = Form::number('people', '拼团人数', $product->getData('people'))->min(2)->col(12);
+        // $f[] = Form::number('people', '拼团人数', $product->getData('people'))->min(2)->col(12);
+        $f[] = Form::number('storage_price', '仓储费', $product->getData('storage_price'))->min(0)->col(12);
         $f[] = Form::number('num', '单次购买商品个数', $product->getData('num'))->min(1)->col(12);
         $f[] = Form::hidden('stock', $product->getData('stock'));
         $f[] = Form::hidden('sales', $product->getData('sales'));

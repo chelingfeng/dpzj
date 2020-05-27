@@ -12,6 +12,7 @@ use app\admin\model\system\SystemGroupData;
 use crmeb\basic\BaseModel;
 use crmeb\services\UtilService;
 use crmeb\traits\ModelTrait;
+use think\facade\Db;
 
 /**
  * TODO 购物车Model
@@ -41,7 +42,7 @@ class StoreCart extends BaseModel
         return time();
     }
 
-    public static function setCart($uid,$product_id,$cart_num = 1,$product_attr_unique = '',$type='product',$is_new = 0,$combination_id=0,$seckill_id = 0,$bargain_id = 0)
+    public static function setCart($uid,$product_id,$cart_num = 1,$product_attr_unique = '',$type='product',$is_new = 0,$combination_id=0,$seckill_id = 0,$bargain_id = 0, $user_stock_id = 0)
     {
         if($cart_num < 1) $cart_num = 1;
         if($seckill_id){
@@ -80,7 +81,11 @@ class StoreCart extends BaseModel
             $product_stock = StoreProductAttrValue::where('product_id',$StoreCombinationInfo['product_id'])->where('suk',$res['suk'])->where('type',0)->value('stock');
             if($product_stock < $cart_num)
                 return self::setErrorInfo('该产品库存不足'.$cart_num);
-        }else{
+        }elseif($user_stock_id){//自由交易 11223344
+            $userStock = Db::table('eb_user_stock')->where('id', $user_stock_id)->find();
+            if($userStock['stock'] < $cart_num)
+                return self::setErrorInfo('该产品库存不足'.$cart_num);
+        } else{
             if(!StoreProduct::isValidProduct($product_id))
                 return self::setErrorInfo('该产品已下架或删除');
             if(!StoreProductAttr::issetProductUnique($product_id,$product_attr_unique))
@@ -88,7 +93,7 @@ class StoreCart extends BaseModel
             if(StoreProduct::getProductStock($product_id,$product_attr_unique) < $cart_num)
                 return self::setErrorInfo('该产品库存不足'.$cart_num);
         }
-        if($cart = self::where('type', $type)->where('uid', $uid)->where('product_id', $product_id)->where('product_attr_unique', $product_attr_unique)->where('is_new', $is_new)->where('is_pay', 0)->where('is_del', 0)->where('combination_id', $combination_id)->where('bargain_id', $bargain_id)->where('seckill_id', $seckill_id)->find()){
+        if($cart = self::where('type', $type)->where('uid', $uid)->where('product_id', $product_id)->where('product_attr_unique', $product_attr_unique)->where('is_new', $is_new)->where('is_pay', 0)->where('is_del', 0)->where('user_stock_id', $user_stock_id)->where('combination_id', $combination_id)->where('bargain_id', $bargain_id)->where('seckill_id', $seckill_id)->find()){
             if($is_new)
                 $cart->cart_num = $cart_num;
             else
@@ -98,7 +103,7 @@ class StoreCart extends BaseModel
             return $cart;
         }else{
             $add_time = time();
-            return self::create(compact('uid','product_id','cart_num','product_attr_unique','is_new','type','combination_id','add_time','bargain_id','seckill_id'));
+            return self::create(compact('uid','product_id','cart_num','product_attr_unique','is_new','type','combination_id','add_time','bargain_id','seckill_id', 'user_stock_id'));
         }
     }
 
@@ -179,6 +184,9 @@ class StoreCart extends BaseModel
             }elseif($cart['combination_id']){
                 $product = StoreCombination::field($combinationInfoField)
                     ->find($cart['combination_id'])->toArray();
+            }elseif($cart['user_stock_id']){
+                $product = StoreProduct::field($productInfoField)
+                    ->find($cart['product_id'])->toArray();
             }else{
                 $product = StoreProduct::field($productInfoField)
                     ->find($cart['product_id'])->toArray();
@@ -196,8 +204,9 @@ class StoreCart extends BaseModel
             //秒杀产品未开启或者已结束
             } else if ($cart['seckill_id'] && ($product['start_time'] > $now || $product['stop_time'] < $now)) {
                 $invalid[] = $product;
+                
                 //商品属性不对应
-            } else if(!StoreProductAttr::issetProductUnique($cart['product_id'],$cart['product_attr_unique']) && !$cart['combination_id'] && !$cart['seckill_id']&& !$cart['bargain_id']){
+            } else if(!StoreProductAttr::issetProductUnique($cart['product_id'],$cart['product_attr_unique']) && !$cart['combination_id'] && !$cart['seckill_id']&& !$cart['user_stock_id']&& !$cart['bargain_id']){
                 $invalid[] = $cart;
             //正常商品
             }else{
@@ -225,6 +234,10 @@ class StoreCart extends BaseModel
 
                 if($cart['product_attr_unique']){
                     $attrInfo = StoreProductAttr::uniqueByAttrInfo($cart['product_attr_unique']);
+                    if ($cart['user_stock_id']) {
+                        $userStock = Db::table('eb_user_stock')->where('id', $cart['user_stock_id'])->find();
+                        $attrInfo['price'] = $userStock['price'];
+                    }
                     //商品没有对应的属性
                     if(!$attrInfo || !$attrInfo['stock'])
                         $invalid[] = $cart;
@@ -240,6 +253,13 @@ class StoreCart extends BaseModel
                         $cart['trueStock'] = $attrInfo['stock'];
                         $cart['costPrice'] = $attrInfo['cost'];
                         $cart['productInfo']['image'] = empty($attrInfo['image']) ? $cart['productInfo']['image'] : $attrInfo['image'];
+                        if ($cart['user_stock_id']) {
+                            $userStock = Db::table('eb_user_stock')->where('id', $cart['user_stock_id'])->find();
+                            $attrInfo['price'] = $userStock['price'];
+                            $cart['truePrice'] = $userStock['price'];
+                            $cart['trueStock'] = $userStock['stock'];
+                            $cart['vip_truePrice'] = 0;
+                        }
                         $valid[] = $cart;
                     }
                 }else{
@@ -251,7 +271,7 @@ class StoreCart extends BaseModel
                         }
                         $cart['productInfo']['attrInfo']['weight'] = $product['weight'];
                         $cart['productInfo']['attrInfo']['volume'] = $product['volume'];
-                    }else {
+                    } else {
                         $cart['truePrice'] = (float)StoreProduct::setLevelPrice($cart['productInfo']['price'],$uid,true);
                         $cart['vip_truePrice'] = (float)StoreProduct::setLevelPrice($cart['productInfo']['price'], $uid);
                     }
@@ -260,7 +280,9 @@ class StoreCart extends BaseModel
                     $valid[] = $cart;
                 }
             }
+          
         }
+        
         foreach ($valid as $k=>$cart){
             if($cart['trueStock'] < $cart['cart_num']){
                 $cart['cart_num'] = $cart['trueStock'];

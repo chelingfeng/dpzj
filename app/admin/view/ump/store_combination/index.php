@@ -44,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-sm6 layui-col-md3">
+        <div class="layui-col-sm6 layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-header">
                     总展现量
@@ -55,7 +55,7 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-sm6 layui-col-md3">
+        <div class="layui-col-sm6 layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-header">
                     访客人数
@@ -66,7 +66,7 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-sm6 layui-col-md3">
+        <div class="layui-col-sm6 layui-col-md4">
             <div class="layui-card">
                 <div class="layui-card-header">
                     参与人数
@@ -74,17 +74,6 @@
                 </div>
                 <div class="layui-card-body">
                     <p class="layuiadmin-big-font">{$statistics.partakeCount}</p>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-sm6 layui-col-md3">
-            <div class="layui-card">
-                <div class="layui-card-header">
-                    成团数量
-                    <span class="layui-badge layuiadmin-badge">量</span>
-                </div>
-                <div class="layui-card-body">
-                    <p class="layuiadmin-big-font">{$statistics.pinkCount}</p>
                 </div>
             </div>
         </div>
@@ -99,6 +88,21 @@
                     <table class="layui-hide" id="combinationList" lay-filter="combinationList"></table>
                     <script type="text/html" id="status">
                         <input type='checkbox' name='status' lay-skin='switch' value="{{d.id}}" lay-filter='status' lay-text='开启|关闭'  {{ d.is_show == 1 ? 'checked' : '' }}>
+                    </script>
+                    <script type="text/html" id="status2">
+                    {{# if (d.status == '0') { }}  
+                        拼团中
+                    {{# } else if(d.status == 1) { }}
+                        未完成
+                    {{# } else if(d.status == 2) { }}
+                        工厂生产中
+                    {{# } else if(d.status == 3) { }}  
+                        工厂已发货
+                    {{# } else if(d.status == 4) { }}
+                        商品已入库
+                    {{# } else { }}  
+
+                    {{# } }}  
                     </script>
                     <script type="text/html" id="stopTime">
                         <div class="count-time-{{d.id}}" data-time="{{d._stop_time}}">
@@ -116,6 +120,21 @@
 
                         <button type="button" class="layui-btn layui-btn-xs" onclick="dropdown(this)">操作<span class="caret"></span></button>
                         <ul class="layui-nav-child layui-anim layui-anim-upbit">
+                            {{# if (d.status == '0') { }}  
+                            <li onclick="changeStatus({{d.id}}, 2)">
+                                <a href="javascript:void(0);"><i class="layui-icon layui-icon-edit"></i> 改为工厂生产中</a>
+                            </li>
+                            {{# } }}  
+                            {{# if (d.status == '2') { }}  
+                            <li onclick="changeStatus({{d.id}}, 3)">
+                                 <a href="javascript:void(0);"><i class="layui-icon layui-icon-edit"></i> 改为工厂已发货</a>
+                            </li>
+                            {{# } }}  
+                            {{# if (d.status == '3') { }}  
+                            <li onclick="changeStatus({{d.id}}, 4)">
+                                 <a href="javascript:void(0);"><i class="layui-icon layui-icon-edit"></i> 改为商品已入库</a>
+                            </li>
+                            {{# } }}  
                             <li>
                                 <a href="javascript:void(0);" onclick="$eb.createModalFrame('{{d.title}}-编辑','{:Url('edit')}?id={{d.id}}')"><i class="layui-icon layui-icon-edit"></i> 编辑活动</a>
                             </li>
@@ -136,20 +155,30 @@
 {block name="script"}
 <script src="{__ADMIN_PATH}js/layuiList.js"></script>
 <script>
+
+    function changeStatus(id, status) {
+        $.ajax({
+            type:'post',
+            url:'{:Url('change_status')}',
+            data:{id:id, status:status},
+            success:function(res){
+                window.location.reload();
+            }
+        })
+    }
+   
     layList.form.render();
     layList.tableList('combinationList',"{:Url('get_combination_list')}",function () {
         return [
             {field: 'id', title: '编号',width:'5%', sort: true,event:'id'},
             {field: 'image', title: '拼团图片',width:'10%',templet: '<p><img src="{{d.image}}" alt="{{d.title}}" class="open_image" data-image="{{d.image}}"></p>'},
             {field: 'title', title: '拼团名称'},
-            {field: 'ot_price', title: '原价',width:'6%'},
-            {field: 'price', title: '拼团价',width:'6%'},
+            {field: 'ot_price', title: '原价/拼团价',width:'8%', templet: '<span>{{d.ot_price}} / {{d.price}}</span>'},
             {field: 'count_people_all', title: '参与人数',width:'7%',templet: '<span>【{{d.count_people_all}}】人</span>'},
-            {field: 'count_people_pink', title: '成团数量',width:'7%',templet: '<span>【{{d.count_people_pink}}】团</span>'},
-            {field: 'quota_show', title: '限量',width:'4%'},
-            {field: 'quota', title: '限量剩余',width:'6%'},
+            {field: 'quota_show', title: '剩余/限量',width:'6%', templet: '<span>{{d.shengyu}} / {{d.quota_show}}</span>'},
             {field: '_stop_time', title: '结束时间', width:'8%',toolbar: '#stopTime'},
-            {field: 'is_show', title: '状态', width:'6%',templet:"#status"},
+            {field: 'is_show', title: '开关', width:'6%',templet:"#status"},
+            {field: 'status', title: '状态', width:'6%',templet:"#status2"},
             {field: 'right', title: '操作', width:'10%', align: 'center', toolbar: '#barDemo'}
         ]
     });

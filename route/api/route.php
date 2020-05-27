@@ -163,6 +163,11 @@ Route::group(function () {
 //未授权接口
 Route::group(function () {
     //公共类
+    Route::get('user_stock', 'store.FreeProductController/userStock')->name('userStock');
+    Route::get('down_user_stock/:id', 'store.FreeProductController/downUserStock')->name('downUserStock');
+    Route::post('up_user_stock/:id', 'store.FreeProductController/upUserStock')->name('upUserStock');
+    Route::get('free_products', 'store.FreeProductController/list')->name('freeProducts');
+    Route::get('free_products/:id', 'store.FreeProductController/get')->name('freeProductDetail');
     Route::get('index', 'PublicController/index')->name('index');//首页
     Route::get('search/keyword', 'PublicController/search')->name('searchKeyword');//热门搜索关键字获取
     //产品分类类

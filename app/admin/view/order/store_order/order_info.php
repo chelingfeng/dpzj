@@ -18,6 +18,40 @@
                 </div>
             </div>
         </div>
+        <div class="col-sm-12" style="margin-top:-20px">
+            <table cellspacing="0" cellpadding="0" border="0" class="layui-table">
+                <thead>
+                    <tr>
+                        <th>主图</th>
+                        <th>商品名称</th>
+                        <th>规格</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>小计</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="_info" id="cart"}
+                    <tr>
+                        <td width="130px"><img style="width: 80px;height: 80px;margin:0;" src="{$cart.cart_info.productInfo.attrInfo.image}"></td>
+                        <td>{$cart.cart_info.productInfo.store_name}</td>
+                        <td>{$cart.cart_info.productInfo.attrInfo.suk}</td>
+                        <td>{$cart.cart_info.cart_num}</td>
+                        <td>{$cart.cart_info.truePrice}</td>
+                        <td><?=sprintf("%.2f", $cart['cart_info']['cart_num'] * $cart['cart_info']['truePrice']); ?></td>
+                    </tr>
+                    {/volist}
+                    <tr>
+                        <td>总计</td>
+                        <td></td>
+                        <td></td>
+                        <td>{$orderInfo.total_num}</td>
+                        <td></td>
+                        <td>{$orderInfo.total_price}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         <div class="col-sm-12">
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -48,6 +82,7 @@
                         <div class="col-xs-6">商品总数: {$orderInfo.total_num}</div>
                         <div class="col-xs-6">商品总价: ￥{$orderInfo.total_price}</div>
                         <div class="col-xs-6">支付邮费: ￥{$orderInfo.total_postage}</div>
+                        <div class="col-xs-6">支付仓储费: ￥{$orderInfo.storage_price}</div>
                         <div class="col-xs-6">优惠券金额: ￥{$orderInfo.coupon_price}</div>
                         <div class="col-xs-6">实际支付: ￥{$orderInfo.pay_price}</div>
                         {if condition="$orderInfo['refund_price'] > 0"}
@@ -86,22 +121,6 @@
                         <div class="col-xs-6" style="color: #733AF9">推广人: {if $spread}{$spread}{else}无{/if}</div>
                         <div class="col-xs-6" style="color: #733b5c">商家备注: {$orderInfo.remark?:'无'}</div>
 
-                    </div>
-                </div>
-            </div>
-        </div>
-         <div class="col-sm-12">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    商品信息
-                </div>
-                <div class="panel-body">
-                    <div class="row show-grid">
-                        {volist name="_info" id="cart"}
-                        <div class="col-xs-4" >{$cart.cart_info.productInfo.store_name}-{$cart.cart_info.productInfo.attrInfo.suk}</div>
-                        <div class="col-xs-4">{$cart.cart_info.productInfo.price}元</div>
-                        <div class="col-xs-4" > {$cart.cart_info.cart_num}</div>
-                        {/volist}
                     </div>
                 </div>
             </div>

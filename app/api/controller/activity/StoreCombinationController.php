@@ -36,6 +36,11 @@ class StoreCombinationController
             ['limit', 10],
         ], $request, true);
         $combinationList = StoreCombination::getAll($page, $limit);
+        foreach ($combinationList as $l) {
+            $l['pink_ok_sum'] = StorePink::getPinkOkSumTotalNum($l['id']);
+            $l['storeInfo'] = StoreCombination::getCombinationOne($l['id']);
+            $l['jindu'] = number_format(($l['storeInfo']['quota'] - $l['pink_ok_sum']) / $l['storeInfo']['quota'] * 100, 1);
+        }
         if (!count($combinationList)) return app('json')->successful([]);
         return app('json')->successful($combinationList->hidden(['info', 'product_id', 'images', 'mer_id', 'attr', 'sort', 'stock', 'sales', 'add_time', 'is_del', 'is_show', 'browse', 'cost', 'is_show', 'start_time', 'stop_time', 'postage', 'is_postage', 'is_host', 'mer_use', 'combination'])->toArray());
     }

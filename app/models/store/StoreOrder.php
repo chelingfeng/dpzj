@@ -25,6 +25,8 @@ use crmeb\repositories\{
     GoodsRepository, PaymentRepositories, OrderRepository, ShortLetterRepositories, UserRepository
 };
 use app\admin\model\system\ShippingTemplates;
+use app\models\store\StoreCombination;
+use think\facade\Db;
 
 /**
  * TODO 订单Model
@@ -73,11 +75,24 @@ class StoreOrder extends BaseModel
      * @return array
      */
     public static function getOrderPriceGroup($cartInfo, $addr)
-    {
+    {  
         $storeFreePostage = floatval(sys_config('store_free_postage')) ?: 0;//满额包邮
         $totalPrice = self::getOrderSumPrice($cartInfo, 'truePrice');//获取订单总金额
         $costPrice = self::getOrderSumPrice($cartInfo, 'costPrice');//获取订单成本价
         $vipPrice = self::getOrderSumPrice($cartInfo, 'vip_truePrice');//获取订单会员优惠金额
+        $storagePrice = self::getOrderStoragePrice($cartInfo);//获取仓储费
+
+        $isUserStock = 0;
+        foreach ($cartInfo as $c) {
+            if ($c['user_stock_id']) {
+                $isUserStock = 1;
+                break;
+            }
+        }
+        if ($isUserStock) {
+            $storeFreePostage = 0;
+            $vipPrice = 0;
+        }
         //如果满额包邮等于0
         if (!$storeFreePostage) {
             $storePostage = 0;
@@ -147,9 +162,20 @@ class StoreOrder extends BaseModel
             }
             if ($storeFreePostage <= $totalPrice) $storePostage = 0;//如果总价大于等于满额包邮 邮费等于0
         }
-        return compact('storePostage', 'storeFreePostage', 'totalPrice', 'costPrice', 'vipPrice');
+        return compact('storePostage', 'storeFreePostage', 'totalPrice', 'costPrice', 'vipPrice', 'storagePrice');
     }
 
+    public static function getOrderStoragePrice($cartInfo)
+    {
+        $sumPrice = 0;
+        foreach ($cartInfo as $cart) {
+            if ($cart['combination_id'] > 0) {
+                $combination = StoreCombination::where('id', $cart['combination_id'])->find();
+                $sumPrice = $sumPrice + ($combination['storage_price'] * $cart['cart_num']);
+            }
+        }
+        return sprintf("%.2f", $sumPrice);
+    }
 
     /**获取某个字段总金额
      * @param $cartInfo
@@ -271,7 +297,7 @@ class StoreOrder extends BaseModel
      * @throws \think\exception\DbException
      */
 
-    public static function cacheKeyCreateOrder($uid, $key, $addressId, $payType, $useIntegral = false, $couponId = 0, $mark = '', $combinationId = 0, $pinkId = 0, $seckill_id = 0, $bargain_id = 0, $test = false, $isChannel = 0, $shipping_type = 1, $real_name = '', $phone = '', $storeId = 0)
+    public static function cacheKeyCreateOrder($uid, $key, $addressId, $payType, $useIntegral = false, $couponId = 0, $mark = '', $combinationId = 0, $pinkId = 0, $seckill_id = 0, $bargain_id = 0, $test = false, $isChannel = 0, $shipping_type = 1, $real_name = '', $phone = '', $storeId = 0, $userStockId = 0)
     {
         self::beginTrans();
         try {
@@ -391,12 +417,14 @@ class StoreOrder extends BaseModel
                 $deductionPrice = 0;
                 $usedIntegral = 0;
             }
+            $payPrice = (float)bcadd($payPrice, $priceGroup['storagePrice'], 2);
             if (!$res2) return self::setErrorInfo('使用积分抵扣失败!', true);
             if ($payPrice <= 0) $payPrice = 0;
             if ($test) {
                 self::rollbackTrans();
                 return [
                     'total_price' => $priceGroup['totalPrice'],
+                    'storage_price' => $priceGroup['storagePrice'],
                     'pay_price' => $payPrice,
                     'pay_postage' => $payPostage,
                     'coupon_price' => $couponPrice,
@@ -412,6 +440,8 @@ class StoreOrder extends BaseModel
                 'user_address' => $addressInfo['province'] . ' ' . $addressInfo['city'] . ' ' . $addressInfo['district'] . ' ' . $addressInfo['detail'],
                 'cart_id' => $cartIds,
                 'total_num' => $totalNum,
+                'storage_price' => $priceGroup['storagePrice'],
+                'user_stock_id' => $userStockId,
                 'total_price' => $priceGroup['totalPrice'],
                 'total_postage' => $priceGroup['storePostage'],
                 'coupon_id' => $couponId,
@@ -442,12 +472,14 @@ class StoreOrder extends BaseModel
             $order = self::create($orderInfo);
             if (!$order) return self::setErrorInfo('订单生成失败!', true);
             $res5 = true;
-            foreach ($cartInfo as $cart) {
-                //减库存加销量
-                if ($combinationId) $res5 = $res5 && StoreCombination::decCombinationStock($cart['cart_num'], $combinationId, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
-                else if ($seckill_id) $res5 = $res5 && StoreSeckill::decSeckillStock($cart['cart_num'], $seckill_id, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
-                else if ($bargain_id) $res5 = $res5 && StoreBargain::decBargainStock($cart['cart_num'], $bargain_id, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
-                else $res5 = $res5 && StoreProduct::decProductStock($cart['cart_num'], $cart['productInfo']['id'], isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
+            if (!$userStockId) {
+                foreach ($cartInfo as $cart) {
+                    //减库存加销量
+                    if ($combinationId) $res5 = $res5 && StoreCombination::decCombinationStock($cart['cart_num'], $combinationId, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
+                    else if ($seckill_id) $res5 = $res5 && StoreSeckill::decSeckillStock($cart['cart_num'], $seckill_id, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
+                    else if ($bargain_id) $res5 = $res5 && StoreBargain::decBargainStock($cart['cart_num'], $bargain_id, isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
+                    else $res5 = $res5 && StoreProduct::decProductStock($cart['cart_num'], $cart['productInfo']['id'], isset($cart['productInfo']['attrInfo']) ? $cart['productInfo']['attrInfo']['unique'] : '');
+                }
             }
             //保存购物车商品信息
             $res4 = false !== StoreOrderCartInfo::setCartInfo($order['id'], $cartInfo);
@@ -755,6 +787,51 @@ class StoreOrder extends BaseModel
         //支付成功后
         event('OrderPaySuccess', [$order, $formId]);
         $res = $res1 && $resPink;
+        // 自由交易
+        if ($order['user_stock_id']) {
+            $userStock = Db::table('eb_user_stock')->where('id', $order['user_stock_id'])->find();
+            //减库存
+            Db::table('eb_user_stock')->where('id', $order['user_stock_id'])->update(
+                ['stock' => $userStock['stock'] - $order['total_num']]
+            );
+            //加库存
+            $toUserStock = Db::table('eb_user_stock')->where('user_id', $order['uid'])->where('product_attr_unique', $userStock['product_attr_unique'])->where('product_id', $userStock['product_id'])->find();
+            if (empty($toUserStock)) {
+                Db::table('eb_user_stock')->insert([
+                    'user_id' => $order['uid'],
+                    'product_attr_unique' => $userStock['product_attr_unique'],
+                    'product_id' => $userStock['product_id'],
+                    'stock' => $order['total_num'],
+                    'add_time' => time(),
+                ]);
+            } else {
+                Db::table('eb_user_stock')->where('id', $toUserStock['id'])->update(
+                    ['stock' => $toUserStock['stock'] + $order['total_num']]
+                );
+            }
+            //加钱
+            $user = Db::table('eb_user')->where('uid', $userStock['user_id'])->find();
+            $number = sprintf("%.2f", $order['total_price'] * 0.94);
+            $balance = $user['brokerage_price'] + $number;
+            Db::table('eb_user_bill')->insert([
+                'uid' => $userStock['user_id'],
+                'link_id' => $order['id'],
+                'pm' => 1,
+                'title' => '自由交易',
+                'category' => 'now_money',
+                'type' => 'brokerage',
+                'number' => $number,
+                'balance' => $balance,
+                'mark' => '自由交易收入'.$number,
+                'add_time' => time(),
+                'status' => 1,
+            ]);
+            Db::table('eb_user')->where('uid', $userStock['user_id'])->update([
+                'brokerage_price' => $balance,
+            ]);
+            //改状态为完成
+            self::where('order_id', $orderId)->update(['status' => 2]);
+        }
         return false !== $res;
     }
 
@@ -960,15 +1037,31 @@ class StoreOrder extends BaseModel
             $status['_class'] = 'state-sqtk';
         } else if (!$order['status']) {
             if ($order['pink_id']) {
-                if (StorePink::where('id', $order['pink_id'])->where('status', 1)->count()) {
+                $storePink = StorePink::where('id', $order['pink_id'])->find();
+                if ($storePink['status'] == 1) {
                     $status['_type'] = 1;
                     $status['_title'] = '拼团中';
                     $status['_msg'] = '等待其他人参加拼团';
                     $status['_class'] = 'state-nfh';
+                } elseif ($storePink['status'] == 2) {
+                    $status['_type'] = 1;
+                    $status['_title'] = '未发货';
+                    $status['_msg'] = '工厂生产中，请耐心等待';
+                    $status['_class'] = 'state-nfh';
+                } elseif ($storePink['status'] == 4) {
+                    $status['_type'] = 1;
+                    $status['_title'] = '未发货';
+                    $status['_msg'] = '工厂发货至仓库，请耐心等待';
+                    $status['_class'] = 'state-nfh';
+                } elseif ($storePink['status'] == 5) {
+                    $status['_type'] = 1;
+                    $status['_title'] = '未发货';
+                    $status['_msg'] = '已入库，请在我的库存中查看';
+                    $status['_class'] = 'state-nfh';
                 } else {
                     $status['_type'] = 1;
                     $status['_title'] = '未发货';
-                    $status['_msg'] = '商家未发货,请耐心等待';
+                    $status['_msg'] = '工厂生产中,请耐心等待';
                     $status['_class'] = 'state-nfh';
                 }
             } else {
@@ -1083,7 +1176,7 @@ class StoreOrder extends BaseModel
     public static function getUserOrderList($uid, $status = '', $page = 0, $limit = 8)
     {
         if ($page) $list = self::statusByWhere($status, $uid)->where('is_del', 0)->where('uid', $uid)
-            ->field('add_time,seckill_id,bargain_id,combination_id,id,order_id,pay_price,total_num,total_price,pay_postage,total_postage,paid,status,refund_status,pay_type,coupon_price,deduction_price,pink_id,delivery_type,is_del,shipping_type')
+            ->field('add_time,user_stock_id,seckill_id,bargain_id,combination_id,id,order_id,pay_price,total_num,total_price,pay_postage,total_postage,paid,status,refund_status,pay_type,coupon_price,deduction_price,pink_id,delivery_type,is_del,shipping_type')
             ->order('add_time DESC')->page((int)$page, (int)$limit)->select()->toArray();
         else  $list = self::statusByWhere($status, $uid)->where('is_del', 0)->where('uid', $uid)
             ->field('add_time,seckill_id,bargain_id,combination_id,id,order_id,pay_price,total_num,total_price,pay_postage,total_postage,paid,status,refund_status,pay_type,coupon_price,deduction_price,pink_id,delivery_type,is_del,shipping_type')

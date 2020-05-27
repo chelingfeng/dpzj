@@ -73,12 +73,14 @@ class StoreOrderController
             $seckill_id = StoreCart::where('id', $cartId)->value('seckill_id');
             $combination_id = StoreCart::where('id', $cartId)->value('combination_id');
             $bargain_id = StoreCart::where('id', $cartId)->value('bargain_id');
+            $user_stock_id = StoreCart::where('id', $cartId)->value('user_stock_id');
         }
         $data['deduction'] = $seckill_id || $combination_id || $bargain_id;
         $data['usableCoupon'] = $usableCoupon;
         $data['addressInfo'] = UserAddress::getUserDefaultAddress($uid);
         $data['seckill_id'] = $seckill_id;
         $data['combination_id'] = $combination_id;
+        $data['user_stock_id'] = $user_stock_id;
         $data['bargain_id'] = $bargain_id;
         $data['cartInfo'] = $cartInfo;
         $data['priceGroup'] = $priceGroup;
@@ -161,9 +163,9 @@ class StoreOrderController
         $uid = $request->uid();
         if (StoreOrder::be(['order_id|unique' => $key, 'uid' => $uid, 'is_del' => 0]))
             return app('json')->status('extend_order', '订单已生成', ['orderId' => $key, 'key' => $key]);
-        list($addressId, $couponId, $payType, $useIntegral, $mark, $combinationId, $pinkId, $seckill_id, $formId, $bargainId, $from, $shipping_type, $real_name, $phone, $storeId) = UtilService::postMore([
+        list($addressId, $couponId, $payType, $useIntegral, $mark, $combinationId, $pinkId, $seckill_id, $formId, $bargainId, $from, $shipping_type, $real_name, $phone, $storeId, $userStockId) = UtilService::postMore([
             'addressId', 'couponId', 'payType', ['useIntegral', 0], 'mark', ['combinationId', 0], ['pinkId', 0], ['seckill_id', 0], ['formId', ''], ['bargainId', ''], ['from', 'weixin'],
-            ['shipping_type', 1], ['real_name', ''], ['phone', ''], ['store_id', 0]
+            ['shipping_type', 1], ['real_name', ''], ['phone', ''], ['store_id', 0], ['user_stock_id', 0]
         ], $request, true);
         $payType = strtolower($payType);
         if ($bargainId) {
@@ -186,7 +188,7 @@ class StoreOrderController
             $isChannel = 0;
         elseif ($from == 'weixinh5')
             $isChannel = 2;
-        $order = StoreOrder::cacheKeyCreateOrder($request->uid(), $key, $addressId, $payType, (int)$useIntegral, $couponId, $mark, $combinationId, $pinkId, $seckill_id, $bargainId, false, $isChannel, $shipping_type, $real_name, $phone, $storeId);
+        $order = StoreOrder::cacheKeyCreateOrder($request->uid(), $key, $addressId, $payType, (int)$useIntegral, $couponId, $mark, $combinationId, $pinkId, $seckill_id, $bargainId, false, $isChannel, $shipping_type, $real_name, $phone, $storeId, $userStockId);
         if ($order === false) return app('json')->fail(StoreOrder::getErrorInfo('订单生成失败'));
         $orderId = $order['order_id'];
         $info = compact('orderId', 'key');

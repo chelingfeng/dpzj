@@ -51,10 +51,11 @@ class StoreOrder extends BaseModel
         $data['yt'] = self::statusByWhere(-2, new self())->where(['is_system_del' => 0])->count();
         $data['del'] = self::statusByWhere(-4, new self())->where(['is_system_del' => 0])->count();
         $data['write_off'] = self::statusByWhere(5, new self())->where(['is_system_del' => 0])->count();
-        $data['general'] = self::where(['pink_id' => 0, 'combination_id' => 0, 'seckill_id' => 0, 'bargain_id' => 0, 'is_system_del' => 0])->count();
+        $data['general'] = self::where(['pink_id' => 0, 'combination_id' => 0, 'seckill_id' => 0, 'bargain_id' => 0, 'user_stock_id' => 0, 'is_system_del' => 0])->count();
         $data['pink'] = self::where('pink_id|combination_id', '>', 0)->where('is_system_del', 0)->count();
         $data['seckill'] = self::where('seckill_id', '>', 0)->where('is_system_del', 0)->count();
         $data['bargain'] = self::where('bargain_id', '>', 0)->where('is_system_del', 0)->count();
+        $data['user_stock'] = self::where('user_stock_id', '>', 0)->where('is_system_del', 0)->count();
         return $data;
     }
 
@@ -109,6 +110,9 @@ class StoreOrder extends BaseModel
                 }
             } elseif ($item['seckill_id']) {
                 $item['pink_name'] = '[秒杀订单]';
+                $item['color'] = '#32c5e9';
+            }elseif ($item['user_stock_id']) {
+                $item['pink_name'] = '[自由交易]';
                 $item['color'] = '#32c5e9';
             } elseif ($item['bargain_id']) {
                 $item['pink_name'] = '[砍价订单]';
@@ -511,7 +515,7 @@ HTML;
         if (isset($where['type'])) {
             switch ($where['type']) {
                 case 1:
-                    $model = $model->where($aler . 'combination_id', 0)->where($aler . 'seckill_id', 0)->where($aler . 'bargain_id', 0);
+                    $model = $model->where($aler . 'combination_id', 0)->where($aler . 'seckill_id', 0)->where($aler . 'bargain_id', 0)->where($aler . 'user_stock_id', 0);
                     break;
                 case 2:
 //                    $model = $model->where($aler.'combination_id',">",0)->where($aler.'pink_id',">",0);
@@ -522,6 +526,9 @@ HTML;
                     break;
                 case 4:
                     $model = $model->where($aler . 'bargain_id', ">", 0);
+                    break;
+                case 5:
+                    $model = $model->where($aler . 'user_stock_id', ">", 0);
                     break;
             }
         }

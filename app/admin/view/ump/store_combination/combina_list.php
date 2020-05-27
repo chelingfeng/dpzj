@@ -19,7 +19,9 @@
                             <select name="status" aria-controls="editable" class="form-control input-sm">
                                 <option value="">全部</option>
                                 <option value="1" {eq name="where.status" value="1"}selected="selected"{/eq}>进行中</option>
-                                <option value="2" {eq name="where.status" value="2"}selected="selected"{/eq}>已完成</option>
+                                <option value="2" {eq name="where.status" value="2"}selected="selected"{/eq}>工厂生产中</option>
+                                <option value="4" {eq name="where.status" value="4"}selected="selected"{/eq}>工厂已发货</option>
+                                <option value="5" {eq name="where.status" value="5"}selected="selected"{/eq}>商品已入库</option>
                                 <option value="3" {eq name="where.status" value="3"}selected="selected"{/eq}>未完成</option>
                             </select>
                             <div class="input-group">
@@ -47,7 +49,6 @@
                             <th class="text-center">开团时间</th>
                             <th class="text-center">拼团商品</th>
                             <th class="text-center">商品总数</th>
-                            <th class="text-center">几人参加</th>
                             <th class="text-center">结束时间</th>
                             <th class="text-center">状态</th>
                             <th class="text-center">操作</th>
@@ -64,13 +65,10 @@
                                 {$vo.add_time|date='Y-m-d H:i:s'}
                             </td>
                             <td class="text-center">
-                                {$vo.title}/{$vo.cid}
+                                {$vo.title} / {$vo.cid}
                             </td>
                             <td class="text-center">
-                                {$vo.people}人
-                            </td>
-                            <td class="text-center">
-                                {$vo.count_people}人
+                                {$vo.total_num}件
                             </td>
                             <td class="text-center">
                                 {$vo.stop_time|date='Y-m-d H:i:s'}
@@ -79,9 +77,13 @@
                                 {if condition="$vo['status'] eq 1"}
                                    <span style="color: #00a0e9">进行中</span>
                                 {elseif condition="$vo['status'] eq 2"}
-                                    <span style="color: #e933ce">已完成</span>
+                                    <span style="color: #e933ce">工厂生产中</span>
                                 {elseif condition="$vo['status'] eq 3"}
                                     <span style="color: #2725e9">未完成</span>
+                                {elseif condition="$vo['status'] eq 4"}
+                                    <span style="color: #2725e9">工厂已发货</span>
+                                {elseif condition="$vo['status'] eq 5"}
+                                    <span style="color: #2725e9">商品已入库</span>
                                 {/if}
                             </td>
                             <td class="text-center">

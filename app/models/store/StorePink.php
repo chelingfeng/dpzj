@@ -59,7 +59,7 @@ class StorePink extends BaseModel
     public static function getPinkOkSumTotalNum($id)
     {
 
-        return self::where('status', 2)->where('is_refund', 0)->sum('total_num');
+        return self::where('cid', $id)->where('status', '<>', 3)->where('is_refund', 0)->sum('total_num');
     }
 
     /**
@@ -116,7 +116,7 @@ class StorePink extends BaseModel
     {
         $model = new self();
         $model = $model->alias('p');
-        $model = $model->field('p.id,p.uid,p.people,p.price,p.stop_time,u.nickname,u.avatar');
+        $model = $model->field('p.id,p.uid,p.people,p.total_num,p.price,p.stop_time,u.nickname,u.avatar');
         $model = $model->where('stop_time', '>', time());
         $model = $model->where('p.cid', $cid);
         $model = $model->where('p.k_id', 0);

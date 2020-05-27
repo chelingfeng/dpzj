@@ -34,7 +34,7 @@ class StoreCartController
      */
     public function add(Request $request)
     {
-        list($productId, $cartNum, $uniqueId, $combinationId, $secKillId, $bargainId, $new) = UtilService::postMore([
+        list($productId, $cartNum, $uniqueId, $combinationId, $secKillId, $bargainId, $new, $userStockId) = UtilService::postMore([
             ['productId',0],//普通产品编号
             ['cartNum',1], //购物车数量
             ['uniqueId',''],//属性唯一值
@@ -42,10 +42,11 @@ class StoreCartController
             ['secKillId',0],//秒杀产品编号
             ['bargainId',0],//砍价产品编号
             ['new',1], // 1 加入购物车直接购买  0 加入购物车
+            ['userStockId',0],//我的库存id
         ], $request, true);
         if (!$productId || !is_numeric($productId)) return app('json')->fail('参数错误');
         if ($bargainId && StoreBargainUserHelp::getSurplusPrice($bargainId, $request->uid())) return app('json')->fail('请先砍价');
-        $res = StoreCart::setCart($request->uid(), $productId, $cartNum, $uniqueId, 'product', $new, $combinationId, $secKillId, $bargainId);
+        $res = StoreCart::setCart($request->uid(), $productId, $cartNum, $uniqueId, 'product', $new, $combinationId, $secKillId, $bargainId, $userStockId);
         if (!$res) return app('json')->fail(StoreCart::getErrorInfo());
         else  return app('json')->successful('ok', ['cartId' => $res->id]);
     }
