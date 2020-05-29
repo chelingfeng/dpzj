@@ -163,6 +163,7 @@ Route::group(function () {
 //未授权接口
 Route::group(function () {
     //公共类
+    Route::get('user_stock/:id', 'store.FreeProductController/userStockDetail')->name('userStockDetail');
     Route::get('user_stock', 'store.FreeProductController/userStock')->name('userStock');
     Route::get('down_user_stock/:id', 'store.FreeProductController/downUserStock')->name('downUserStock');
     Route::post('up_user_stock/:id', 'store.FreeProductController/upUserStock')->name('upUserStock');

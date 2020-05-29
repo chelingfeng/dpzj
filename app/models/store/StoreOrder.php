@@ -83,10 +83,13 @@ class StoreOrder extends BaseModel
         $storagePrice = self::getOrderStoragePrice($cartInfo);//获取仓储费
 
         $isUserStock = 0;
+        $isTakeout = 0;
         foreach ($cartInfo as $c) {
             if ($c['user_stock_id']) {
                 $isUserStock = 1;
-                break;
+            }
+            if ($c['takeout_id']) {
+                $isTakeout = 1;
             }
         }
         if ($isUserStock) {
@@ -161,6 +164,14 @@ class StoreOrder extends BaseModel
                 $storePostage = 0;
             }
             if ($storeFreePostage <= $totalPrice) $storePostage = 0;//如果总价大于等于满额包邮 邮费等于0
+        }
+
+        $product = Db::table('eb_store_product')->where('id', $cartInfo[0]['product_id'])->find();
+        if ($isTakeout) {
+            $storeFreePostage = 0;
+            $vipPrice = 0;
+            $costPrice = 0;
+            $storePostage = $cartInfo[0]['cart_num'] * $product['delivery_fee'];
         }
         return compact('storePostage', 'storeFreePostage', 'totalPrice', 'costPrice', 'vipPrice', 'storagePrice');
     }
@@ -297,7 +308,7 @@ class StoreOrder extends BaseModel
      * @throws \think\exception\DbException
      */
 
-    public static function cacheKeyCreateOrder($uid, $key, $addressId, $payType, $useIntegral = false, $couponId = 0, $mark = '', $combinationId = 0, $pinkId = 0, $seckill_id = 0, $bargain_id = 0, $test = false, $isChannel = 0, $shipping_type = 1, $real_name = '', $phone = '', $storeId = 0, $userStockId = 0)
+    public static function cacheKeyCreateOrder($uid, $key, $addressId, $payType, $useIntegral = false, $couponId = 0, $mark = '', $combinationId = 0, $pinkId = 0, $seckill_id = 0, $bargain_id = 0, $test = false, $isChannel = 0, $shipping_type = 1, $real_name = '', $phone = '', $storeId = 0, $userStockId = 0, $takeoutId = 0)
     {
         self::beginTrans();
         try {
@@ -442,6 +453,7 @@ class StoreOrder extends BaseModel
                 'total_num' => $totalNum,
                 'storage_price' => $priceGroup['storagePrice'],
                 'user_stock_id' => $userStockId,
+                'takeout_id' => $takeoutId,
                 'total_price' => $priceGroup['totalPrice'],
                 'total_postage' => $priceGroup['storePostage'],
                 'coupon_id' => $couponId,
@@ -787,6 +799,14 @@ class StoreOrder extends BaseModel
         //支付成功后
         event('OrderPaySuccess', [$order, $formId]);
         $res = $res1 && $resPink;
+        //自提
+        if ($order['takeout_id']) {
+            $userStock = Db::table('eb_user_stock')->where('id', $order['takeout_id'])->find();
+            //减库存
+            Db::table('eb_user_stock')->where('id', $order['takeout_id'])->update(
+                ['stock' => $userStock['stock'] - $order['total_num']]
+            );
+        }
         // 自由交易
         if ($order['user_stock_id']) {
             $userStock = Db::table('eb_user_stock')->where('id', $order['user_stock_id'])->find();

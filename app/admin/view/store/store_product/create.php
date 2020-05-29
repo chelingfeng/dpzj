@@ -579,7 +579,7 @@
                             </div>
                             <div class="layui-tab-item">
                                 <div class="layui-row layui-col-space15">
-                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md4">
+                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md3">
                                         <div class="grid-demo grid-demo-bg1">
                                             <div class="layui-form-item">
                                                 <label class="layui-form-label">虚拟销量</label>
@@ -590,7 +590,18 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md4">
+                                      <div class="layui-col-xs12 layui-col-sm4 layui-col-md3">
+                                        <div class="grid-demo grid-demo-bg1">
+                                            <div class="layui-form-item">
+                                                <label class="layui-form-label">配送费</label>
+                                                <div class="layui-input-block">
+                                                    <input type="number" name="delivery_fee" lay-verify="title" autocomplete="off"
+                                                           placeholder="请输入配送费" class="layui-input" v-model="formData.delivery_fee">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md3">
                                         <div class="grid-demo grid-demo-bg1">
                                             <div class="layui-form-item">
                                                 <label class="layui-form-label">积分</label>
@@ -601,7 +612,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md4">
+                                    <div class="layui-col-xs12 layui-col-sm4 layui-col-md3">
                                         <div class="grid-demo grid-demo-bg1">
                                             <div class="layui-form-item">
                                                 <label class="layui-form-label">排序</label>
@@ -900,6 +911,7 @@
                 attrs: [],
                 description: '',
                 ficti: 0,
+                delivery_fee: 0,
                 give_integral: 0,
                 sort: 0,
                 is_show: 1,

@@ -31,11 +31,13 @@ class StoreCombinationController
      */
     public function lst(Request $request)
     {
-        list($page, $limit) = UtilService::getMore([
+        list($page, $limit, $sid, $keyword) = UtilService::getMore([
             ['page', 1],
             ['limit', 10],
+            ['sid', 0],
+            ['keyword', ''],
         ], $request, true);
-        $combinationList = StoreCombination::getAll($page, $limit);
+        $combinationList = StoreCombination::getAll($page, $limit, $sid, $keyword);
         foreach ($combinationList as $l) {
             $l['pink_ok_sum'] = StorePink::getPinkOkSumTotalNum($l['id']);
             $l['storeInfo'] = StoreCombination::getCombinationOne($l['id']);

@@ -261,6 +261,7 @@ class StoreProduct extends AuthController
             ['temp_id', 0],
             ['is_hot', 0],
             ['is_benefit', 0],
+            ['delivery_fee', 0],
             ['is_best', 0],
             ['is_new', 0],
             ['mer_use', 0],

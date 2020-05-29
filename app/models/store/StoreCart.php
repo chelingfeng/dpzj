@@ -42,7 +42,7 @@ class StoreCart extends BaseModel
         return time();
     }
 
-    public static function setCart($uid,$product_id,$cart_num = 1,$product_attr_unique = '',$type='product',$is_new = 0,$combination_id=0,$seckill_id = 0,$bargain_id = 0, $user_stock_id = 0)
+    public static function setCart($uid,$product_id,$cart_num = 1,$product_attr_unique = '',$type='product',$is_new = 0,$combination_id=0,$seckill_id = 0,$bargain_id = 0, $user_stock_id = 0, $takeout_id)
     {
         if($cart_num < 1) $cart_num = 1;
         if($seckill_id){
@@ -85,6 +85,10 @@ class StoreCart extends BaseModel
             $userStock = Db::table('eb_user_stock')->where('id', $user_stock_id)->find();
             if($userStock['stock'] < $cart_num)
                 return self::setErrorInfo('该产品库存不足'.$cart_num);
+        } elseif($takeout_id){//自提
+            $userStock = Db::table('eb_user_stock')->where('id', $takeout_id)->find();
+            if($userStock['stock'] < $cart_num)
+                return self::setErrorInfo('该产品库存不足'.$cart_num);
         } else{
             if(!StoreProduct::isValidProduct($product_id))
                 return self::setErrorInfo('该产品已下架或删除');
@@ -93,7 +97,7 @@ class StoreCart extends BaseModel
             if(StoreProduct::getProductStock($product_id,$product_attr_unique) < $cart_num)
                 return self::setErrorInfo('该产品库存不足'.$cart_num);
         }
-        if($cart = self::where('type', $type)->where('uid', $uid)->where('product_id', $product_id)->where('product_attr_unique', $product_attr_unique)->where('is_new', $is_new)->where('is_pay', 0)->where('is_del', 0)->where('user_stock_id', $user_stock_id)->where('combination_id', $combination_id)->where('bargain_id', $bargain_id)->where('seckill_id', $seckill_id)->find()){
+        if($cart = self::where('type', $type)->where('uid', $uid)->where('product_id', $product_id)->where('product_attr_unique', $product_attr_unique)->where('is_new', $is_new)->where('is_pay', 0)->where('is_del', 0)->where('user_stock_id', $user_stock_id)->where('takeout_id', $takeout_id)->where('combination_id', $combination_id)->where('bargain_id', $bargain_id)->where('seckill_id', $seckill_id)->find()){
             if($is_new)
                 $cart->cart_num = $cart_num;
             else
@@ -103,7 +107,7 @@ class StoreCart extends BaseModel
             return $cart;
         }else{
             $add_time = time();
-            return self::create(compact('uid','product_id','cart_num','product_attr_unique','is_new','type','combination_id','add_time','bargain_id','seckill_id', 'user_stock_id'));
+            return self::create(compact('uid','product_id','cart_num','product_attr_unique','is_new','type','combination_id','add_time','bargain_id','seckill_id', 'user_stock_id', 'takeout_id'));
         }
     }
 
@@ -187,6 +191,9 @@ class StoreCart extends BaseModel
             }elseif($cart['user_stock_id']){
                 $product = StoreProduct::field($productInfoField)
                     ->find($cart['product_id'])->toArray();
+            }elseif($cart['takeout_id']){
+                $product = StoreProduct::field($productInfoField)
+                    ->find($cart['product_id'])->toArray();
             }else{
                 $product = StoreProduct::field($productInfoField)
                     ->find($cart['product_id'])->toArray();
@@ -206,7 +213,7 @@ class StoreCart extends BaseModel
                 $invalid[] = $product;
                 
                 //商品属性不对应
-            } else if(!StoreProductAttr::issetProductUnique($cart['product_id'],$cart['product_attr_unique']) && !$cart['combination_id'] && !$cart['seckill_id']&& !$cart['user_stock_id']&& !$cart['bargain_id']){
+            } else if(!StoreProductAttr::issetProductUnique($cart['product_id'],$cart['product_attr_unique']) && !$cart['combination_id'] && !$cart['takeout_id'] && !$cart['seckill_id']&& !$cart['user_stock_id']&& !$cart['bargain_id']){
                 $invalid[] = $cart;
             //正常商品
             }else{
@@ -238,6 +245,10 @@ class StoreCart extends BaseModel
                         $userStock = Db::table('eb_user_stock')->where('id', $cart['user_stock_id'])->find();
                         $attrInfo['price'] = $userStock['price'];
                     }
+                    if ($cart['takeout_id']) {
+                        $userStock = Db::table('eb_user_stock')->where('id', $cart['takeout_id'])->find();
+                        $attrInfo['price'] = 0;
+                    }
                     //商品没有对应的属性
                     if(!$attrInfo || !$attrInfo['stock'])
                         $invalid[] = $cart;
@@ -257,6 +268,13 @@ class StoreCart extends BaseModel
                             $userStock = Db::table('eb_user_stock')->where('id', $cart['user_stock_id'])->find();
                             $attrInfo['price'] = $userStock['price'];
                             $cart['truePrice'] = $userStock['price'];
+                            $cart['trueStock'] = $userStock['stock'];
+                            $cart['vip_truePrice'] = 0;
+                        }
+                        if ($cart['takeout_id']) {
+                            $userStock = Db::table('eb_user_stock')->where('id', $cart['takeout_id'])->find();
+                            $attrInfo['price'] = 0;
+                            $cart['truePrice'] = 0;
                             $cart['trueStock'] = $userStock['stock'];
                             $cart['vip_truePrice'] = 0;
                         }

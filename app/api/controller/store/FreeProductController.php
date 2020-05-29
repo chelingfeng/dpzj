@@ -32,6 +32,15 @@ class FreeProductController
         }
         return app('json')->success('ok', $data);
     }
+
+    public function userStockDetail(Request $request, $id)
+    {
+        $uid = $request->uid();
+        $data = Db::table('eb_user_stock')->where('id', $id)->where('user_id', $uid)->where('stock', '>', 0)->order('id ASC')->find();
+        $data['product'] = Db::table('eb_store_product')->where('id', $data['product_id'])->find();
+        $data['attrValue'] = Db::table('eb_store_product_attr_value')->where('unique', $data['product_attr_unique'])->find();
+        return app('json')->success('ok', $data);
+    }
     
     public function list(Request $request)
     {

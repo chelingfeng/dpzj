@@ -89,7 +89,7 @@ class StoreCombination extends BaseModel
      * @param int $limit
      * @return mixed
      */
-    public static function getAll($page = 0, $limit = 20)
+    public static function getAll($page = 0, $limit = 20, $sid = 0, $keyword = '')
     {
         $model = new self();
         $model = $model->alias('c');
@@ -100,6 +100,12 @@ class StoreCombination extends BaseModel
         $model = $model->where('c.is_del', 0);
         $model = $model->where('c.start_time', '<', time());
         $model = $model->where('c.stop_time', '>', time());
+        if ($keyword) {
+            $model = $model->where('c.title', 'LIKE', '%'.$keyword.'%');
+        }
+        if ($sid) {
+            $model = $model->where('s.cate_id', 'LIKE', '%'.$sid.'%');
+        }
         if ($page) $model = $model->page($page, $limit);
         return $model->select()->each(function ($item) {
             $item['image'] = set_file_url($item['image']);
