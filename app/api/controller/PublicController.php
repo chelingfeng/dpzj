@@ -42,6 +42,8 @@ class PublicController
         $activity = sys_data('routine_home_activity', 3) ?: [];//TODO 首页活动区域图片
         $site_name = sys_config('site_name');
         $routine_index_page = sys_data('routine_index_page');
+        $liveroom_pic = sys_config('liveroom_pic');
+        $liveroom_num = sys_config('liveroom_num');
         $info['fastInfo'] = $routine_index_page[0]['fast_info'] ?? '';//sys_config('fast_info');//TODO 快速选择简介
         $info['bastInfo'] = $routine_index_page[0]['bast_info'] ?? '';//sys_config('bast_info');//TODO 精品推荐简介
         $info['firstInfo'] = $routine_index_page[0]['first_info'] ?? '';//sys_config('first_info');//TODO 首发新品简介
@@ -64,7 +66,7 @@ class PublicController
         $subscribe = WechatUser::where('uid', $request->uid() ?? 0)->value('subscribe') ? true : false;
         $newGoodsBananr = sys_config('new_goods_bananr');
         $tengxun_map_key = sys_config('tengxun_map_key');
-        return app('json')->successful(compact('banner', 'menus', 'roll', 'info', 'activity', 'lovely', 'benefit', 'likeInfo', 'logoUrl', 'couponList', 'site_name', 'subscribe', 'newGoodsBananr', 'tengxun_map_key'));
+        return app('json')->successful(compact('liveroom_num', 'liveroom_pic', 'banner', 'menus', 'roll', 'info', 'activity', 'lovely', 'benefit', 'likeInfo', 'logoUrl', 'couponList', 'site_name', 'subscribe', 'newGoodsBananr', 'tengxun_map_key'));
     }
 
     /**

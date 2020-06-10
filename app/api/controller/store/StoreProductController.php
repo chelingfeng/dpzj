@@ -18,6 +18,7 @@ use crmeb\services\QrcodeService;
 use crmeb\services\SystemConfigService;
 use crmeb\services\UtilService;
 use crmeb\services\upload\Upload;
+use think\facade\Db;
 
 /**
  * 商品类
@@ -44,7 +45,12 @@ class StoreProductController
             ['limit', 0],
             ['type', 0]
         ], $request);
-        return app('json')->successful(StoreProduct::getProductList($data, $request->uid()));
+
+        $data = StoreProduct::getProductList($data, $request->uid());
+        foreach ($data as &$v) {
+            $v['minPriceAttr'] = Db::table('eb_store_product_attr_value')->where('product_id', $v['id'])->order('price ASC')->find();
+        }
+        return app('json')->successful($data);
     }
 
     /**

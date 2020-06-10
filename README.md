@@ -10,3 +10,6 @@ eb_store_cart 增加 user_stock_id 用户库存id
 eb_store_cart 增加 takeout_id 自提-用户库存id
 eb_store_order 增加 takeout_id 自提-用户库存id
 eb_store_product 增加 delivery_fee 配送费
+
+eb_store_combination one_commission 一级佣金
+eb_store_combination two_commission 二级佣金

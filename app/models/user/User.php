@@ -278,6 +278,7 @@ class User extends BaseModel
         if (isset($orderInfo['combination_id']) && $orderInfo['combination_id']) return true;
         if (isset($orderInfo['seckill_id']) && $orderInfo['seckill_id']) return true;
         if (isset($orderInfo['bargain_id']) && $orderInfo['bargain_id']) return true;
+        if (isset($orderInfo['user_store_id']) && $orderInfo['user_store_id']) return true; //自由交易不返佣
 
         $userInfo = User::getUserInfo($orderInfo['uid']);
         //TODO 当前用户不存在 没有上级 或者 当用用户上级时自己  直接返回

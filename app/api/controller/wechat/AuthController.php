@@ -169,6 +169,6 @@ class AuthController
             }
             return $list;
         }, 600);
-        return app('json')->success($list);
+        return app('json')->success(array());
     }
 }

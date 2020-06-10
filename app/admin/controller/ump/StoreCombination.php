@@ -56,6 +56,7 @@ class StoreCombination extends AuthController
     {
         $status = request()->param('status');
         $id = request()->param('id');
+        $storeCombination = Db::table('eb_store_combination')->where(['id' => $id])->find();
         if ($status == '2') { //工厂生产中
             StoreCombinationModel::where('id', $id)->update(['is_show' => 0, 'status' => $status]);
             StorePink2::where('cid', $id)->where('status', '1')->where('is_refund', 0)->update(['status' => 2]);
@@ -67,6 +68,7 @@ class StoreCombination extends AuthController
             StorePink2::where('cid', $id)->where('status', '4')->where('is_refund', 0)->update(['status' => 5]);
             $pinks = StorePink2::where('cid', $id)->where('status', '5')->where('is_refund', 0)->select();
             foreach ($pinks as $pink) {
+                $this->takeCombination($storeCombination, $pink);
                 $cart = Db::table('eb_store_order_cart_info')->where('oid', $pink['order_id_key'])->find();
                 $cart['cart_info'] = json_decode($cart['cart_info'], true);
                 $toUserStock = Db::table('eb_user_stock')->where('user_id', $pink['uid'])->where('product_attr_unique', $cart['cart_info']['product_attr_unique'])->where('product_id', $cart['cart_info']['product_id'])->find();
@@ -83,6 +85,57 @@ class StoreCombination extends AuthController
                         ['stock' => $toUserStock['stock'] + $cart['cart_info']['cart_num']]
                     );
                 }
+            }
+        }
+    }
+
+    //发放佣金
+    protected function takeCombination($storeCombination, $storePink)
+    {
+        if ($storeCombination['one_commission'] > 0) {
+            $user = Db::table('eb_user')->where(['uid' => $storePink['uid']])->find();
+            if ($user['spread_uid']) {
+                $onwUser =  Db::table('eb_user')->where(['uid' => $user['spread_uid']])->find();
+                $onePrice = sprintf("%.2f", $storeCombination['one_commission'] * $storePink['total_num']);
+                $balance = $onwUser['brokerage_price'] + $onePrice;
+                Db::table('eb_user_bill')->insert([
+                    'uid' => $onwUser['uid'],
+                    'link_id' => $storePink['order_id_key'],
+                    'pm' => 1,
+                    'title' => '团购提成',
+                    'category' => 'now_money',
+                    'type' => 'brokerage',
+                    'number' => $onePrice,
+                    'balance' => $balance,
+                    'mark' => '团购提成收入'.$onePrice,
+                    'add_time' => time(),
+                    'status' => 1,
+                ]);
+                Db::table('eb_user')->where('uid', $onwUser['uid'])->update([
+                    'brokerage_price' => $balance,
+                ]);
+            }
+
+            if ($onwUser['spread_uid'] && $storeCombination['two_commission'] > 0) {
+                $twoUser =  Db::table('eb_user')->where(['uid' => $onwUser['spread_uid']])->find();
+                $twoPrice = sprintf("%.2f", $storeCombination['two_commission'] * $storePink['total_num']);
+                $balance = $twoUser['brokerage_price'] + $twoPrice;
+                Db::table('eb_user_bill')->insert([
+                    'uid' => $twoUser['uid'],
+                    'link_id' => $storePink['order_id_key'],
+                    'pm' => 1,
+                    'title' => '团购提成',
+                    'category' => 'now_money',
+                    'type' => 'brokerage',
+                    'number' => $twoPrice,
+                    'balance' => $balance,
+                    'mark' => '团购提成收入'.$twoPrice,
+                    'add_time' => time(),
+                    'status' => 1,
+                ]);
+                Db::table('eb_user')->where('uid', $twoUser['uid'])->update([
+                    'brokerage_price' => $balance,
+                ]);
             }
         }
     }
@@ -174,6 +227,8 @@ class StoreCombination extends AuthController
         $f[] = Form::number('effective_time', '拼团时效', '1000')->placeholder('请输入拼团订单有效时间，单位：小时')->col(12);
         // $f[] = Form::number('people', '成团数量', 2)->min(2)->col(12);
         $f[] = Form::number('storage_price', '仓储费', 0)->min(0)->col(12);
+        $f[] = Form::number('one_commission', '一级佣金', 0)->min(0)->col(12);
+        $f[] = Form::number('two_commission', '二级佣金', 0)->min(0)->col(12);
         $f[] = Form::number('num', '单次购买商品个数', 100)->min(100)->col(12);
         $f[] = Form::number('sort', '排序')->col(12);
         $f[] = Form::radio('is_host', '热门推荐', 1)->options([['label' => '开启', 'value' => 1], ['label' => '关闭', 'value' => 0]])->col(12);
@@ -199,6 +254,8 @@ class StoreCombination extends AuthController
             ['effective_time', 0],
             ['postage', 0],
             ['storage_price', 0],
+            ['one_commission', 0],
+            ['two_commission', 0],
             ['price', 0],
             ['people', 2],
             ['sort', 0],
@@ -274,7 +331,9 @@ class StoreCombination extends AuthController
         $f[] = Form::hidden('price', $product->getData('price'));
         // $f[] = Form::number('people', '拼团人数', $product->getData('people'))->min(2)->col(12);
         $f[] = Form::number('storage_price', '仓储费', $product->getData('storage_price'))->min(0)->col(12);
-        $f[] = Form::number('num', '单次购买商品个数', $product->getData('num'))->min(1)->col(12);
+        $f[] = Form::number('one_commission', '一级佣金', $product->getData('one_commission'))->min(0)->col(12);
+        $f[] = Form::number('two_commission', '二级佣金', $product->getData('two_commission'))->min(0)->col(12);
+        $f[] = Form::number('num', '单次购买商品个数', $product->getData('num'))->min(100)->col(12);
         $f[] = Form::hidden('stock', $product->getData('stock'));
         $f[] = Form::hidden('sales', $product->getData('sales'));
         $f[] = Form::number('sort', '排序', $product->getData('sort'))->col(12);
