@@ -29,6 +29,7 @@
 .layui-table-cell p{
     height: 20px;
     line-height: 20px;
+    overflow: hidden;
 }
 /*table复选框*/
 .layui-table-view .layui-form-checkbox[lay-skin=primary] i {

@@ -330,6 +330,7 @@ class User extends AuthController
         $f[] = Form::text('phone', '手机号', $user->getData('phone'));
         $f[] = Form::date('birthday', '生日', $user->getData('birthday') ? date('Y-m-d', $user->getData('birthday')) : 0);
         $f[] = Form::input('card_id', '身份证号', $user->getData('card_id'));
+        $f[] = Form::input('spread_uid', '推荐人id', $user->getData('spread_uid'));
         $f[] = Form::textarea('mark', '用户备注', $user->getData('mark'));
         $f[] = Form::radio('is_promoter', '推广员', $user->getData('is_promoter'))->options([['value' => 1, 'label' => '开启'], ['value' => 0, 'label' => '关闭']]);
         $f[] = Form::radio('status', '状态', $user->getData('status'))->options([['value' => 1, 'label' => '开启'], ['value' => 0, 'label' => '锁定']]);
@@ -351,6 +352,7 @@ class User extends AuthController
             ['money', 0],
             ['integration_status', 0],
             ['integration', 0],
+            ['spread_uid', ''],
             ['status', 0],
         ]);
         if (!$uid) return $this->failed('数据不存在');
@@ -413,6 +415,10 @@ class User extends AuthController
         $edit['birthday'] = strtotime($data['birthday']);
         $edit['mark'] = $data['mark'];
         $edit['is_promoter'] = $data['is_promoter'];
+        $tuijian = UserModel::get($data['spread_uid']);
+        if ($tuijian) {
+            $edit['spread_uid'] = $data['spread_uid'];
+        }
         if ($edit) $res3 = UserModel::edit($edit, $uid);
         else $res3 = true;
         if ($res1 && $res2 && $res3) $res = true;
