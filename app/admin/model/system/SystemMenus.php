@@ -63,7 +63,7 @@ class SystemMenus extends BaseModel
 
     public function getPidAttr($value)
     {
-        return !$value ? '顶级' : self::get($value)['menu_name'];
+        return !$value ? '顶级' : self::get($value)['menu_name'] ?? '';
     }
 
     /**

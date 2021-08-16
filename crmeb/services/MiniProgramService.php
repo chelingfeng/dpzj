@@ -26,12 +26,21 @@ class MiniProgramService
         $wechat = SystemConfigService::more(['site_url', 'routine_appId', 'routine_appsecret']);
         $payment = SystemConfigService::more(['pay_routine_mchid', 'pay_routine_key', 'pay_routine_client_cert', 'pay_routine_client_key', 'pay_weixin_open']);
         $config = [];
-        $config['mini_program'] = [
-            'app_id' => isset($wechat['routine_appId']) ? trim($wechat['routine_appId']) : '',
-            'secret' => isset($wechat['routine_appsecret']) ? trim($wechat['routine_appsecret']) : '',
-            'token' => isset($wechat['wechat_token']) ? trim($wechat['wechat_token']) : '',
-            'aes_key' => isset($wechat['wechat_encodingaeskey']) ? trim($wechat['wechat_encodingaeskey']) : ''
-        ];
+        if (isSupplyChain()) {
+            $config['mini_program'] = [
+                'app_id' => 'wx7876d88fce5146c1',
+                'secret' => 'fe5c4dd953ef52767059ab0b0ddbbdc1',
+                'token' => '',
+                'aes_key' => ''
+            ];
+        } else {
+            $config['mini_program'] = [
+                'app_id' => isset($wechat['routine_appId']) ? trim($wechat['routine_appId']) : '',
+                'secret' => isset($wechat['routine_appsecret']) ? trim($wechat['routine_appsecret']) : '',
+                'token' => isset($wechat['wechat_token']) ? trim($wechat['wechat_token']) : '',
+                'aes_key' => isset($wechat['wechat_encodingaeskey']) ? trim($wechat['wechat_encodingaeskey']) : ''
+            ];
+        }
         $config['payment'] = [
             'app_id' => isset($wechat['routine_appId']) ? trim($wechat['routine_appId']) : '',
             'merchant_id' => trim($payment['pay_routine_mchid']),
@@ -40,6 +49,9 @@ class MiniProgramService
             'key_path' => realpath('.' . $payment['pay_routine_client_key']),
             'notify_url' => $wechat['site_url'] . Url::buildUrl('/api/routine/notify')->suffix(false)->build()
         ];
+        if (isSupplyChain()) {
+            $config['payment']['app_id'] = 'wx7876d88fce5146c1';
+        }
         return $config;
     }
 

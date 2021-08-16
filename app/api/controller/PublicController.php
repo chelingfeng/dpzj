@@ -115,6 +115,11 @@ class PublicController
             if ($value['wap_url'] == '/customer/index' && !StoreService::orderServiceStatus($user->uid))
                 unset($menusInfo[$key]);
         }
+        foreach ($menusInfo as $k => $m) {
+            if (!in_array($m['id'], [135, 138, 139, 140, 141, 172])) {
+                unset($menusInfo[$k]);
+            }
+        }
         return app('json')->successful(['routine_my_menus' => $menusInfo]);
     }
 

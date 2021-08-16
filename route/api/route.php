@@ -65,6 +65,7 @@ Route::group(function () {
     //用户类  用户coupons/order
     Route::get('user', 'user.UserController/user')->name('user');//个人中心
     Route::post('user/edit', 'user.UserController/edit')->name('userEdit');//用户修改信息
+    Route::post('user/bind_shop', 'user.UserController/bind_shop')->name('bindShop');//
     Route::get('user/balance', 'user.UserController/balance')->name('userBalance');//用户资金统计
     Route::get('userinfo', 'user.UserController/userinfo')->name('userinfo');// 用户信息
     //用户类  地址

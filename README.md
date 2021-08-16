@@ -13,3 +13,11 @@ eb_store_product 增加 delivery_fee 配送费
 
 eb_store_combination one_commission 一级佣金
 eb_store_combination two_commission 二级佣金
+
+
+供应链小程序
+eb_user 增加字段 is_supply_chain shop_id
+
+eb_shop门店表
+
+eb_store_product 增加admin_id

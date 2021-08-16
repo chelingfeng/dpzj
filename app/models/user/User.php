@@ -210,7 +210,8 @@ class User extends BaseModel
             'add_ip' => request()->ip(),
             'last_time' => time(),
             'last_ip' => request()->ip(),
-            'user_type' => $routineUser['user_type']
+            'user_type' => $routineUser['user_type'],
+            'is_supply_chain' => isSupplyChain() == true ? 1 : 0
         ]);
         $res = $res1 && $res2;
         self::checkTrans($res);

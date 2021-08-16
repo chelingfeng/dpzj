@@ -72,9 +72,11 @@
                                 <i class="fa {eq name='vo.status' value='1'}fa-check text-navy{else/}fa-close text-danger{/eq}"></i>
                             </td>
                             <td class="text-center">
+                                <?php if (($vo['id'] == 7 && isset($_GET['edit'])) || $vo['id'] != 7) { ?>
                                 <button class="btn btn-info btn-xs" type="button"  onclick="$eb.createModalFrame('编辑','{:Url('edit',array('id'=>$vo['id']))}')"><i class="fa fa-edit"></i> 编辑</button>
                                 <button class="btn btn-danger btn-xs" data-url="{:Url('delete',array('id'=>$vo['id']))}" type="button"><i class="fa fa-times"></i> 删除
                                 </button>
+                                <?php } ?>
                             </td>
                         </tr>
                         {/volist}

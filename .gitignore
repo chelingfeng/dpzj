@@ -5,3 +5,4 @@
 /public/uploads/*
 /backup/
 .env
+.DS_Store

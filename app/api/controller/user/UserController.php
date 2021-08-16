@@ -21,6 +21,7 @@ use app\models\user\UserExtract;
 use app\models\user\UserNotice;
 use crmeb\services\GroupDataService;
 use crmeb\services\UtilService;
+use think\facade\Db;
 
 /**
  * 用户类
@@ -149,6 +150,15 @@ class UserController
             $user['switchUserInfo'][] = $request->user();
         } else if (!$user['phone']) {
             $user['switchUserInfo'][] = $request->user();
+        }
+
+        if ($user['shop_id'] > 0) {
+            $user['shop'] = Db::table('eb_shop')->field('admin_id,username')->where([
+                'id' => $user['shop_id']
+            ])->find();
+            $user['admin'] = Db::table('eb_system_admin')->field('real_name')->where([
+                'id' => $user['shop']['admin_id']
+            ])->find();
         }
 
         return app('json')->successful($user);
@@ -527,6 +537,34 @@ class UserController
         ], $request, true);
         if (User::editUser($avatar, $nickname, $phone, $request->uid())) return app('json')->successful('修改成功');
         return app('json')->fail('修改失败');
+    }
+
+    public function bind_shop(Request $request)
+    {
+        list($username, $password) = UtilService::postMore([
+            ['username', ''],
+            ['password', ''],
+        ], $request, true);
+
+        $shop = Db::table('eb_shop')->where([
+            'username' => $username,
+            'password' => md5($password),
+        ])->find();
+
+        if (empty($shop)) {
+            return app('json')->fail('门店地址或密码不正常');
+        }
+
+        $user = Db::table('eb_user')->where(['shop_id' => $shop['id']])->find();
+        if (!empty($user)) {
+            return app('json')->fail('该门店已绑定过~');
+        }
+
+        Db::table('eb_user')->where(['uid' => $request->uid()])->update([
+            'shop_id' => $shop['id']
+        ]);
+
+        return app('json')->successful('登陆成功');
     }
 
     /**

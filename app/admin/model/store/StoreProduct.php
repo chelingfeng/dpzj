@@ -117,6 +117,9 @@ class StoreProduct extends BaseModel
             if (isset($where['store_name']) && $where['store_name'] != '') {
                 $model = $model->where('p.store_name|p.keyword|p.id', 'LIKE', "%$where[store_name]%");
             }
+            if (isset($where['admin_id']) && $where['admin_id'] != '') {
+                $model = $model->where('p.admin_id', $where['admin_id']);
+            }
             if (isset($where['cate_id']) && trim($where['cate_id']) != '') {
                 $catid1 = $where['cate_id'] . ',';//匹配最前面的cateid
                 $catid2 = ',' . $where['cate_id'] . ',';//匹配中间的cateid

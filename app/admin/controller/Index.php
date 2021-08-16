@@ -24,8 +24,18 @@ class Index extends AuthController
         $roles = explode(',', $adminInfo['roles']);
         $site_logo = SystemConfig::getOneConfig('menu_name', 'site_logo')->toArray();
 
+        // 品牌方不显示维护模块 
+        $menuList = SystemMenus::menuList();
+        if ($adminInfo['roles'] == 7) {
+            foreach ($menuList as $k => $v) {
+                if ($v['id'] == 21) {
+                    unset($menuList[$k]);
+                }
+            }
+        }
+    
         $this->assign([
-            'menuList' => SystemMenus::menuList(),
+            'menuList' => array_values($menuList),
             'site_logo' => json_decode($site_logo['value'], true),
             'new_order_audio_link' => sys_config('new_order_audio_link'),
             'role_name' => SystemRole::where('id', $roles[0])->field('role_name')->find(),
@@ -37,6 +47,10 @@ class Index extends AuthController
     //后台首页内容
     public function main()
     {
+        $adminInfo = $this->adminInfo->toArray();
+        if ($adminInfo['roles'] == 7) {
+            return '';
+        }
         /*首页第一行统计*/
         $now_month = strtotime(date('Y-m'));//本月
         $pre_month = strtotime(date('Y-m', strtotime('-1 month')));//上月

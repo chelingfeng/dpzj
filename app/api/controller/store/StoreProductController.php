@@ -45,7 +45,17 @@ class StoreProductController
             ['limit', 0],
             ['type', 0]
         ], $request);
-
+        
+        if (isSupplyChain()) {
+            $user = Db::table('eb_user')->where('uid', $request->uid())->find();
+            if (!empty($user['shop_id'])) {
+                $shop = Db::table('eb_shop')->where('id', $user['shop_id'])->find();
+                $data['admin_id'] = $shop['admin_id'];
+            } else {
+                $data['admin_id'] = -1;
+            }
+        }
+        
         $data = StoreProduct::getProductList($data, $request->uid());
         foreach ($data as &$v) {
             $v['minPriceAttr'] = Db::table('eb_store_product_attr_value')->where('product_id', $v['id'])->order('price ASC')->find();

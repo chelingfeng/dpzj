@@ -514,3 +514,8 @@ if (!function_exists('array_unique_fb')) {
         return $out;
     }
 }
+
+function isSupplyChain()
+{
+    return isset($_SERVER['HTTP_X_AUTH_APP']);
+}

@@ -45,23 +45,51 @@ class StoreProduct extends AuthController
      */
     public function index()
     {
+        $adminInfo = $this->adminInfo->toArray();
+        $isBrand = $adminInfo['roles'] == 7;
         $type = $this->request->param('type');
         //获取分类
         $this->assign('cate', CategoryModel::getTierList(null, 1));
         //出售中产品
-        $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->count();
+        if ($isBrand) {
+            $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->where('admin_id', $this->adminId)->count();
+        } else {
+            $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->count();
+        }
         //待上架产品
-        $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->count();
+        if ($isBrand) {
+            $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->where('admin_id', $this->adminId)->count();
+        } else {
+            $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->count();
+        }
         //仓库中产品
-        $warehouse = ProductModel::where('is_del', 0)->count();
+        if ($isBrand) {
+            $warehouse = ProductModel::where('is_del', 0)->where('admin_id', $this->adminId)->count();
+        } else {
+            $warehouse = ProductModel::where('is_del', 0)->count();
+        }
         //已经售馨产品
-        $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->count();
+        if ($isBrand) {
+            $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->where('admin_id', $this->adminId)->count();
+        } else {
+            $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->count();
+        }
         //警戒库存
         $store_stock = sys_config('store_stock');
+        
         if ($store_stock < 0) $store_stock = 2;
-        $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->count();
+        if ($isBrand) {
+            $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->where('admin_id', $this->adminId)->count();
+        } else {
+            $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->count();
+        }
+        
         //回收站
-        $recycle = ProductModel::where('is_del', 1)->count();
+        if ($isBrand) {
+            $recycle = ProductModel::where('is_del', 1)->where('admin_id', $this->adminId)->count();
+        } else {
+            $recycle = ProductModel::where('is_del', 1)->count();
+        }
         if ($type == null) $type = 1;
         $this->assign(compact('type', 'onsale', 'forsale', 'warehouse', 'outofstock', 'policeforce', 'recycle'));
         return $this->fetch();
@@ -83,6 +111,13 @@ class StoreProduct extends AuthController
             ['order', ''],
             ['type', $this->request->param('type')]
         ]);
+        
+        
+        $adminInfo = $this->adminInfo->toArray();
+        $isBrand = $adminInfo['roles'] == 7;
+        if ($isBrand) {
+            $where['admin_id'] = $this->adminId;
+        }
         return Json::successlayui(ProductModel::ProductList($where));
     }
 
@@ -345,6 +380,7 @@ class StoreProduct extends AuthController
                 return Json::fail(StoreProductAttr::getErrorInfo());
             }
         } else {
+            $data['admin_id'] = $this->adminId;
             $data['add_time'] = time();
             $data['code_path'] = '';
             $res = ProductModel::create($data);
