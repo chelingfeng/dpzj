@@ -12,6 +12,7 @@ use crmeb\utils\Hook;
 use EasyWeChat\Foundation\Application;
 use EasyWeChat\Payment\Order;
 use think\facade\Route as Url;
+use think\facade\Env;
 
 /**微信小程序接口
  * Class WechatMinService
@@ -28,8 +29,8 @@ class MiniProgramService
         $config = [];
         if (isSupplyChain()) {
             $config['mini_program'] = [
-                'app_id' => 'wx7876d88fce5146c1',
-                'secret' => 'fe5c4dd953ef52767059ab0b0ddbbdc1',
+                'app_id' => Env::get('app.app_id', ''),
+                'secret' => Env::get('app.secret', ''),
                 'token' => '',
                 'aes_key' => ''
             ];
@@ -50,7 +51,7 @@ class MiniProgramService
             'notify_url' => $wechat['site_url'] . Url::buildUrl('/api/routine/notify')->suffix(false)->build()
         ];
         if (isSupplyChain()) {
-            $config['payment']['app_id'] = 'wx7876d88fce5146c1';
+            $config['payment']['app_id'] = Env::get('app.app_id', '');
         }
         return $config;
     }
