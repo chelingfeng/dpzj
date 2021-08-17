@@ -552,7 +552,7 @@ class UserController
         ])->find();
 
         if (empty($shop)) {
-            return app('json')->fail('门店地址或密码不正常');
+            return app('json')->fail('门店名称或密码不正常');
         }
 
         $user = Db::table('eb_user')->where(['shop_id' => $shop['id']])->find();

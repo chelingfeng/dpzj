@@ -21,3 +21,5 @@ eb_user 增加字段 is_supply_chain shop_id
 eb_shop门店表
 
 eb_store_product 增加admin_id
+
+删除门店时删除user表的中shop_id
