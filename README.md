@@ -23,3 +23,9 @@ eb_shop门店表
 eb_store_product 增加admin_id
 
 删除门店时删除user表的中shop_id
+
+eb_brand_product 品牌方关联的产品
+
+eb_shop_product_hide 商家是否能展示产品
+
+eb_shop_price 价格细目表

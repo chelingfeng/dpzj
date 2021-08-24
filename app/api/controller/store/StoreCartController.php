@@ -5,6 +5,7 @@ use app\models\store\StoreBargainUserHelp;
 use app\models\store\StoreCart;
 use app\Request;
 use crmeb\services\UtilService;
+use think\facade\Db;
 
 /**
  * 购物车类
@@ -21,7 +22,19 @@ class StoreCartController
      */
     public function lst(Request $request)
     {
-        return app('json')->successful(StoreCart::getUserProductCartList($request->uid()));
+        $data = StoreCart::getUserProductCartList($request->uid());
+        
+        foreach ($data['valid'] as &$d) {
+            $suk = $d['productInfo']['attrInfo']['suk'];
+            $user = Db::table('eb_user')->where('uid', $request->uid())->find();
+            $minShopPrice = Db::table('eb_shop_price')->where(['suk' => $suk, 'product_id' => $d['product_id'], 'shop_id' => $user['shop_id']])->find();
+            if (!empty($minShopPrice)) {
+                $d['truePrice'] = $minShopPrice['price'];
+            }
+                
+        }
+
+        return app('json')->successful($data);
     }
 
     /**

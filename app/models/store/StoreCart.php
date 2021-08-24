@@ -320,6 +320,18 @@ class StoreCart extends BaseModel
             }
         }
 
+        foreach ($valid as &$d) {
+            $suk = $d['productInfo']['attrInfo']['suk'];
+            $user = Db::table('eb_user')->where('uid', $uid)->find();
+            $minShopPrice = Db::table('eb_shop_price')->where(['suk' => $suk, 'product_id' => $d['product_id'], 'shop_id' => $user['shop_id']])->find();
+            if (!empty($minShopPrice)) {
+                $d['truePrice'] = $minShopPrice['price'];
+                $d['productInfo']['price'] = $minShopPrice['price'];
+                $d['productInfo']['attrInfo']['price'] = $minShopPrice['price'];
+            }
+                
+        }
+
         return compact('valid','invalid');
     }
 

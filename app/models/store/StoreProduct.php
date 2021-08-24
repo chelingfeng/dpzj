@@ -108,6 +108,7 @@ class StoreProduct extends BaseModel
         if (!empty($keyword)) $model->where('keyword|store_name', 'LIKE', htmlspecialchars("%$keyword%"));
         if ($news != 0) $model->where('is_new', 1);
         if (isset($data['admin_id'])) $model->where('admin_id', $data['admin_id']);
+        if (isset($data['ids'])) $model->where('id', 'in', $data['ids']);
         $baseOrder = '';
         if ($priceOrder) $baseOrder = $priceOrder == 'desc' ? 'price DESC' : 'price ASC';
 //        if($salesOrder) $baseOrder = $salesOrder == 'desc' ? 'sales DESC' : 'sales ASC';//真实销量

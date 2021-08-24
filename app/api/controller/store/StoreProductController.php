@@ -46,20 +46,38 @@ class StoreProductController
             ['type', 0]
         ], $request);
         
+        $user = Db::table('eb_user')->where('uid', $request->uid())->find();
         if (isSupplyChain()) {
-            $user = Db::table('eb_user')->where('uid', $request->uid())->find();
+            $data['ids'] = [-1];
             if (!empty($user['shop_id'])) {
                 $shop = Db::table('eb_shop')->where('id', $user['shop_id'])->find();
-                $data['admin_id'] = $shop['admin_id'];
-            } else {
-                $data['admin_id'] = -1;
+                $brandProducts = Db::table('eb_brand_product')->where('admin_id', $shop['admin_id'])->select()->toArray();
+                $hides = Db::table('eb_shop_product_hide')->where('shop_id', $shop['id'])->select()->toArray();
+                $hIds = [];
+                foreach ($hides as $hide) {
+                    $hIds[] = $hide['product_id'];
+                }
+                foreach ($brandProducts as $brandProduct) {
+                    if (!in_array($brandProduct['product_id'], $hIds)) {
+                        $data['ids'][] = $brandProduct['product_id'];
+                    }
+                }
             }
+            $data['ids'] = array_values($data['ids']);
         }
         
         $data = StoreProduct::getProductList($data, $request->uid());
         foreach ($data as &$v) {
-            $v['minPriceAttr'] = Db::table('eb_store_product_attr_value')->where('product_id', $v['id'])->order('price ASC')->find();
+            $minShopPrice = Db::table('eb_shop_price')->where(['product_id' => $v['id'], 'shop_id' => $user['shop_id']])->order('price ASC')->find();
+            if (!empty($minShopPrice)) {
+                $v['minPriceAttr'] = Db::table('eb_store_product_attr_value')->where(['product_id' => $v['id'], 'suk' => $minShopPrice['suk']])->order('price ASC')->find();
+                $v['minPriceAttr']['price'] = $minShopPrice['price'];
+                $v['price'] = $minShopPrice['price'];
+            } else {
+                $v['minPriceAttr'] = Db::table('eb_store_product_attr_value')->where('product_id', $v['id'])->order('price ASC')->find();
+            }
         }
+
         return app('json')->successful($data);
     }
 
@@ -156,6 +174,22 @@ class StoreProductController
         $data['similarity'] = StoreProduct::cateIdBySimilarityProduct($storeInfo['cate_id'], 'id,store_name,image,price,sales,ficti', 4);
         $data['productAttr'] = $productAttr;
         $data['productValue'] = $productValue;
+
+        $user = Db::table('eb_user')->where('uid', $request->uid())->find();
+        foreach ($data['productValue'] as &$p) {
+            $minShopPrice = Db::table('eb_shop_price')->where(['suk' => $p['suk'], 'product_id' => $id, 'shop_id' => $user['shop_id']])->find();
+            if (!empty($minShopPrice)) {
+                $p['price'] = $minShopPrice['price'];
+            }
+        }
+
+        $data['storeInfo']['vip_price'] = 0; //不显示vip价格
+       
+        $minShopPrice = Db::table('eb_shop_price')->where(['product_id' => $id, 'shop_id' => $user['shop_id']])->order('price ASC')->find();
+        if (!empty($minShopPrice)) {
+            $data['storeInfo']['price'] = $minShopPrice['price'];
+        }
+
         $data['priceName'] = 0;
         if (!$data['storeInfo']['spec_type'] && !empty($productAttr)) {
             StoreProduct::where('id', $id)->update(['spec_type' => 1]);

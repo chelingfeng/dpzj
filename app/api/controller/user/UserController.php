@@ -331,6 +331,14 @@ class UserController
         ], $request, true);
         if (!(int)$limit) return app('json')->successful([]);
         $productRelationList = StoreProductRelation::getUserCollectProduct($request->uid(), (int)$page, (int)$limit);
+
+        $user = Db::table('eb_user')->where('uid', $request->uid())->find();
+        foreach ($productRelationList as &$d) {
+            $minShopPrice = Db::table('eb_shop_price')->where(['product_id' => $d['pid'], 'shop_id' => $user['shop_id']])->order('price ASC')->find();
+            if (!empty($minShopPrice)) {
+                $d['price'] = $minShopPrice['price'];
+            }
+        }
         return app('json')->successful($productRelationList);
     }
 

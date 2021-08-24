@@ -24,6 +24,7 @@ use think\facade\Route as Url;
 use app\admin\model\system\{
     SystemAttachment, ShippingTemplates
 };
+use think\facade\Db;
 
 
 /**
@@ -52,25 +53,34 @@ class StoreProduct extends AuthController
         $this->assign('cate', CategoryModel::getTierList(null, 1));
         //出售中产品
         if ($isBrand) {
-            $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->where('admin_id', $this->adminId)->count();
+            $ids = [-1];
+            $brandProducts = Db::table('eb_brand_product')->where('admin_id = '.$adminInfo['id'])->select()->toArray();
+            foreach ($brandProducts as $brandProduct) {
+                $ids[] = $brandProduct['product_id'];
+            }
+            $brWhere = 'id IN ('.implode(',', $ids).')';
+        }
+
+        if ($isBrand) {
+            $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->where($brWhere)->count();
         } else {
             $onsale = ProductModel::where('is_del', 0)->where('is_show', 1)->count();
         }
         //待上架产品
         if ($isBrand) {
-            $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->where('admin_id', $this->adminId)->count();
+            $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->where($brWhere)->count();
         } else {
             $forsale = ProductModel::where('is_del', 0)->where('is_show', 0)->count();
         }
         //仓库中产品
         if ($isBrand) {
-            $warehouse = ProductModel::where('is_del', 0)->where('admin_id', $this->adminId)->count();
+            $warehouse = ProductModel::where('is_del', 0)->where($brWhere)->count();
         } else {
             $warehouse = ProductModel::where('is_del', 0)->count();
         }
         //已经售馨产品
         if ($isBrand) {
-            $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->where('admin_id', $this->adminId)->count();
+            $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->where($brWhere)->count();
         } else {
             $outofstock = ProductModel::getModelObject()->where(ProductModel::setData(4))->count();
         }
@@ -79,14 +89,14 @@ class StoreProduct extends AuthController
         
         if ($store_stock < 0) $store_stock = 2;
         if ($isBrand) {
-            $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->where('admin_id', $this->adminId)->count();
+            $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->where($brWhere)->count();
         } else {
             $policeforce = ProductModel::getModelObject()->where(ProductModel::setData(5))->where('p.stock', '<=', $store_stock)->count();
         }
         
         //回收站
         if ($isBrand) {
-            $recycle = ProductModel::where('is_del', 1)->where('admin_id', $this->adminId)->count();
+            $recycle = ProductModel::where('is_del', 1)->where($brWhere)->count();
         } else {
             $recycle = ProductModel::where('is_del', 1)->count();
         }
@@ -116,7 +126,11 @@ class StoreProduct extends AuthController
         $adminInfo = $this->adminInfo->toArray();
         $isBrand = $adminInfo['roles'] == 7;
         if ($isBrand) {
-            $where['admin_id'] = $this->adminId;
+            $where['ids'] = [-1];
+            $brandProducts = Db::table('eb_brand_product')->where('admin_id = '.$adminInfo['id'])->select()->toArray();
+            foreach ($brandProducts as $brandProduct) {
+                $where['ids'][] = $brandProduct['product_id'];
+            }
         }
         return Json::successlayui(ProductModel::ProductList($where));
     }
@@ -386,6 +400,13 @@ class StoreProduct extends AuthController
             $res = ProductModel::create($data);
             $description = $data['description'];
             StoreDescription::saveDescription($description, $res['id']);
+            $adminInfo = $this->adminInfo->toArray();
+            if ($adminInfo['roles'] == 7) {
+                Db::table('eb_brand_product')->insert([
+                    'product_id' => $res['id'],
+                    'admin_id' => $this->adminId,
+                ]);
+            }
             $cateData = [];
             foreach ($cate_id as $cid) {
                 $cateData[] = ['product_id' => $res['id'], 'cate_id' => $cid, 'add_time' => time()];

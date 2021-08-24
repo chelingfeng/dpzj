@@ -117,6 +117,9 @@ class StoreProduct extends BaseModel
             if (isset($where['store_name']) && $where['store_name'] != '') {
                 $model = $model->where('p.store_name|p.keyword|p.id', 'LIKE', "%$where[store_name]%");
             }
+            if (isset($where['ids']) && !empty($where['ids'])) {
+                $model = $model->where('p.id', 'in', $where['ids']);
+            }
             if (isset($where['admin_id']) && $where['admin_id'] != '') {
                 $model = $model->where('p.admin_id', $where['admin_id']);
             }

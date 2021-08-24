@@ -30,6 +30,7 @@ use crmeb\services\{
     SystemConfigService,
     UtilService
 };
+use think\facade\Db;
 
 /**
  * 订单类
