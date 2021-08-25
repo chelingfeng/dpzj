@@ -75,6 +75,9 @@
                                 <button class="layui-btn layui-btn-sm" data-type="show">批量上架</button>
                             {/case}
                         {/switch}
+                        <?php if ($isBrand == 1) { ?>
+                        <a class="layui-btn layui-btn-sm" href="{:Url('depot')}">添加仓库商品</a>
+                        <?php } ?>
                     </div>
                     <table class="layui-hide" id="List" lay-filter="List"></table>
                     <!--图片-->

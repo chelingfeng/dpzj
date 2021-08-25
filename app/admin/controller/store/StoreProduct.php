@@ -102,6 +102,7 @@ class StoreProduct extends AuthController
         }
         if ($type == null) $type = 1;
         $this->assign(compact('type', 'onsale', 'forsale', 'warehouse', 'outofstock', 'policeforce', 'recycle'));
+        $this->assign('isBrand', $isBrand);
         return $this->fetch();
     }
 
@@ -394,7 +395,9 @@ class StoreProduct extends AuthController
                 return Json::fail(StoreProductAttr::getErrorInfo());
             }
         } else {
-            $data['admin_id'] = $this->adminId;
+            if ($adminInfo['roles'] == 7) {
+                $data['admin_id'] = $this->adminId;
+            }
             $data['add_time'] = time();
             $data['code_path'] = '';
             $res = ProductModel::create($data);
@@ -780,6 +783,38 @@ class StoreProduct extends AuthController
             }
         } else {
             return Json::fail();
+        }
+    }
+
+    public function depot()
+    {
+        $adminInfo = $this->adminInfo->toArray();
+
+        $db = Db::table('eb_store_product')->where('admin_id = 0');
+        if (!empty($_POST['keyword'])) {
+            $db->where('store_name', 'like', '%'.$_POST['keyword'].'%');
+        }
+        $goods = $db->column('id, store_name');
+
+        $productIds = Db::table('eb_brand_product')->where('admin_id = '.$adminInfo['id'])->column('product_id');
+
+        $this->assign('productIds', $productIds);
+        $this->assign('goods', array_values($goods));
+        return $this->fetch();
+    }
+
+    public function saveBrand()
+    {
+        $adminInfo = $this->adminInfo->toArray();
+
+        $result = Db::table('eb_brand_product')->where('admin_id = '.$adminInfo['id'])->where('product_id='.$_POST['product_id'])->find();
+        if (empty($result)) {
+            Db::table('eb_brand_product')->insert([
+               'admin_id' => $adminInfo['id'],
+               'product_id' => $_POST['product_id'],
+            ]);
+        } else {
+            Db::table('eb_brand_product')->where('id', $result['id'])->delete();
         }
     }
 }
