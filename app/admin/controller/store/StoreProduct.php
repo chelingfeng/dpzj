@@ -133,7 +133,14 @@ class StoreProduct extends AuthController
                 $where['ids'][] = $brandProduct['product_id'];
             }
         }
-        return Json::successlayui(ProductModel::ProductList($where));
+        $data = ProductModel::ProductList($where);
+        foreach ($data['data'] as &$d) {
+            $d['isEdit'] = 1;
+            if ($isBrand && $d['admin_id'] != $adminInfo['id']) {
+                $d['isEdit'] = 0;
+            }
+        }
+        return Json::successlayui($data);
     }
 
     /**
@@ -395,6 +402,7 @@ class StoreProduct extends AuthController
                 return Json::fail(StoreProductAttr::getErrorInfo());
             }
         } else {
+            $adminInfo = $this->adminInfo->toArray();
             if ($adminInfo['roles'] == 7) {
                 $data['admin_id'] = $this->adminId;
             }
@@ -403,7 +411,6 @@ class StoreProduct extends AuthController
             $res = ProductModel::create($data);
             $description = $data['description'];
             StoreDescription::saveDescription($description, $res['id']);
-            $adminInfo = $this->adminInfo->toArray();
             if ($adminInfo['roles'] == 7) {
                 Db::table('eb_brand_product')->insert([
                     'product_id' => $res['id'],

@@ -106,6 +106,7 @@
                     </script>
                     <!--操作-->
                     <script type="text/html" id="act">
+                        {{# if(d.isEdit == 1){ }}
                         <button type="button" class="layui-btn layui-btn-xs layui-btn-normal" lay-event='edit'>
                             编辑
                         </button>
@@ -130,6 +131,7 @@
                                 </a>
                             </li>
                         </ul>
+                        {{# } }}
                     </script>
                 </div>
             </div>
