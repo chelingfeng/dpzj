@@ -25,7 +25,7 @@ class ShopProduct extends AuthController
         $goods = $db->column('id, store_name');
         
 
-        $where = 'admin_id = '.$this->adminInfo->id;
+        $where = 'del = 0 AND admin_id = '.$this->adminInfo->id;
         if (!empty($_POST['shop_id'])) {
             $where .= ' AND id = '.$_POST['shop_id'];
         }
@@ -35,7 +35,7 @@ class ShopProduct extends AuthController
             $shop['hideProduct'] =  Db::table('eb_shop_product_hide')->where('shop_id', $shop['id'])->column('product_id');  
         }
 
-        $where = 'admin_id = '.$this->adminInfo->id;
+        $where = 'del = 0 AND admin_id = '.$this->adminInfo->id;
         $sshops = Db::table('eb_shop')->where($where)->select()->toArray();
         $this->assign('shops', $shops);
         $this->assign('goods', $goods);

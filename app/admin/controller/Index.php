@@ -8,6 +8,7 @@ use app\admin\model\order\StoreOrder as StoreOrderModel;//订单
 use app\admin\model\system\{SystemConfig, SystemMenus, SystemRole};
 use app\admin\model\user\{User, UserExtract as UserExtractModel, User as UserModel};
 use app\admin\model\store\{StoreProduct, StoreProductReply as StoreProductReplyModel, StoreProduct as ProductModel};
+use think\facade\Db;
 
 /**
  * 首页控制器
@@ -49,7 +50,9 @@ class Index extends AuthController
     {
         $adminInfo = $this->adminInfo->toArray();
         if ($adminInfo['roles'] == 7) {
-            return '';
+            $url = '/admin/Index/main2.html';
+            header("Location: $url");
+            exit();
         }
         /*首页第一行统计*/
         $now_month = strtotime(date('Y-m'));//本月
@@ -148,6 +151,82 @@ class Index extends AuthController
             'second_line' => $second_line,
             'topData' => $topData,
         ]);
+        return $this->fetch();
+    }
+
+    //后台首页内容
+    public function main2()
+    {
+        $adminInfo = $this->adminInfo->toArray();
+
+        $shopIds = [];
+        $where = 'del = 0 AND admin_id = '.$adminInfo['id'];
+        $shops = Db::table('eb_shop')->where($where)->field('id')->select()->toArray();
+        foreach ($shops as $shop) {
+            $shopIds[] = $shop['id'];
+        }
+
+        $userIds = [];
+        $users = Db::table('eb_user')->where('shop_id', 'in', $shopIds)->field('uid')->select()->toArray();
+        foreach ($users as $user) {
+            $userIds[] = $user['uid'];
+        }
+
+        //今天订单数
+        $todayOrderNum = StoreOrderModel::where('paid', 1)->where('uid', 'in', $userIds)->whereTime('pay_time', 'today')->count();
+        
+        //订单总数
+        $orderNum = StoreOrderModel::where('paid', 1)->where('uid', 'in', $userIds)->count();
+
+        //今日交易额
+        $todayPayPrice = StoreOrderModel::where('paid', 1)->where('uid', 'in', $userIds)->whereTime('pay_time', 'today')->sum('pay_price');
+        
+        //交易总额
+        $allPayPrice = StoreOrderModel::where('paid', 1)->where('uid', 'in', $userIds)->sum('pay_price');
+
+
+        $bpIds = [];
+        $bp = Db::table('eb_brand_product')->where('admin_id', $adminInfo['id'])->select();
+        foreach ($bp as $b) {
+            $bpIds[] = $b['product_id'];
+        }
+
+        $db = Db::table('eb_store_product')->where('id', 'in', $bpIds);
+        $goods = $db->column('id, store_name');
+
+        if (!empty($_POST['shop_id'])) {
+            $user =  Db::table('eb_user')->where('shop_id', $_POST['shop_id'])->find();
+            $userIds = [$user['uid'] ?? -1];
+        }
+        $orderIds = [];
+        $orders = Db::table('eb_store_order')->where('paid', 1)->where('uid', 'in', $userIds)->field('id')->select()->toArray();
+        foreach ($orders as $order) {
+            $orderIds[] = $order['id'];
+        }
+        
+        foreach ($goods as &$g) {
+            $g['price'] = 0;
+            $g['num'] = 0;
+            $lst = Db::table('eb_store_order_cart_info')->where('oid', 'in', $orderIds)->where('product_id', $g['id'])->select()->toArray();
+
+            foreach ($lst as $l) {
+                $detail = json_decode($l['cart_info'], true);
+                $g['num'] += $detail['cart_num'];
+                $g['price'] += $detail['truePrice'];
+            }
+        }
+
+        $where = 'del = 0 AND admin_id = '.$adminInfo['id'];
+        $sshops = Db::table('eb_shop')->where($where)->select()->toArray();
+        $this->assign('sshops', $sshops);
+        $this->assign([
+            'goods' => $goods,
+            'todayOrderNum' => $todayOrderNum,
+            'orderNum' => $orderNum,
+            'todayPayPrice' => $todayPayPrice,
+            'allPayPrice' => $allPayPrice,
+        ]);
+
         return $this->fetch();
     }
 

@@ -154,11 +154,17 @@ class UserController
 
         if ($user['shop_id'] > 0) {
             $user['shop'] = Db::table('eb_shop')->field('admin_id,username')->where([
-                'id' => $user['shop_id']
+                'id' => $user['shop_id'],
+                'del' => 0
             ])->find();
-            $user['admin'] = Db::table('eb_system_admin')->field('real_name')->where([
-                'id' => $user['shop']['admin_id']
-            ])->find();
+            if ($user['shop']) {
+                $user['admin'] = Db::table('eb_system_admin')->field('real_name')->where([
+                    'id' => $user['shop']['admin_id']
+                ])->find();
+            } else {
+                $user['shop_id'] = 0;
+            }
+           
         }
 
         return app('json')->successful($user);
@@ -556,6 +562,7 @@ class UserController
 
         $shop = Db::table('eb_shop')->where([
             'username' => $username,
+            'del' => 0,
             'password' => md5($password),
         ])->find();
 

@@ -71,7 +71,7 @@ class StoreProductPrice extends AuthController
             $shop['admin'] = Db::table('eb_system_admin')->where('id = '.$shop['admin_id'])->find();
         }
 
-        $where = 'id > 0';
+        $where = 'del = 0 AND id > 0';
         if (!empty($_POST['admin_id'])) {
             $where .= ' AND admin_id = '.$_POST['admin_id'];
         }
